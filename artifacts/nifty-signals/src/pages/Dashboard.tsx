@@ -34,29 +34,39 @@ function MetricCard({ label, value, sub, variant, icon: Icon }: {
   )
 }
 
+type SignalType = "CALL_BUY" | "CALL_SELL" | "PUT_BUY" | "PUT_SELL"
+const SIGNAL_BADGE: Record<string, { label: string; cls: string }> = {
+  CALL_BUY:  { label: "CALL BUY",  cls: "bg-success/15 text-success border-success/30" },
+  PUT_BUY:   { label: "PUT BUY",   cls: "bg-destructive/15 text-destructive border-destructive/30" },
+  CALL_SELL: { label: "CALL SELL", cls: "bg-warning/15 text-warning border-warning/30" },
+  PUT_SELL:  { label: "PUT SELL",  cls: "bg-primary/15 text-primary border-primary/30" },
+}
+
 function SignalCard({ signal }: { signal: {
   id: string; direction: "BUY" | "SELL"; instrument: string; optionType: string;
-  strikePrice: number | null; entry: number; stopLoss: number; target1: number;
+  optionSignalType?: string;
+  strikePrice: number | null; optionLtp?: number | null;
+  entry: number; stopLoss: number; target1: number;
   target2: number; target3: number; riskReward: number; confidenceScore: number;
   confidenceLabel: string; smcSetup: string; status: string;
 } }) {
-  const isBuy = signal.direction === "BUY"
-  const confColor = signal.confidenceScore >= 80 ? "text-success" : signal.confidenceScore >= 60 ? "text-warning" : "text-destructive"
-  const confBg = signal.confidenceScore >= 80 ? "bg-success/10 border-success/30" : signal.confidenceScore >= 60 ? "bg-warning/10 border-warning/30" : "bg-destructive/10 border-destructive/30"
+  const sigType = (signal.optionSignalType ?? (signal.direction === "BUY" ? "CALL_BUY" : "PUT_BUY")) as SignalType
+  const badge = SIGNAL_BADGE[sigType] ?? SIGNAL_BADGE.CALL_BUY
   return (
     <div className="rounded-lg border border-border bg-card p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <span className={cn("text-sm font-bold px-2 py-0.5 rounded font-mono",
-            isBuy ? "bg-success/15 text-success border border-success/30" : "bg-destructive/15 text-destructive border border-destructive/30"
-          )}>{signal.direction}</span>
+          <span className={cn("text-xs font-bold px-2 py-0.5 rounded border font-mono", badge.cls)}>{badge.label}</span>
           <span className="text-sm font-semibold">{signal.instrument}</span>
-          <span className="text-xs text-muted-foreground font-mono">{signal.optionType}{signal.strikePrice ? ` ${signal.strikePrice}` : ""}</span>
+          <span className="text-xs text-muted-foreground font-mono">{signal.strikePrice ?? ""} {signal.optionType}</span>
         </div>
-        <div className={cn("text-xs font-bold px-2 py-0.5 rounded border", confBg, confColor)}>
+        <div className="text-xs font-bold px-2 py-0.5 rounded border bg-success/10 border-success/30 text-success">
           {signal.confidenceScore.toFixed(0)}% {signal.confidenceLabel}
         </div>
       </div>
+      {signal.optionLtp != null && (
+        <div className="text-xs text-muted-foreground font-mono">Option LTP: <span className="text-foreground font-bold">₹{signal.optionLtp.toFixed(2)}</span></div>
+      )}
       <div className="grid grid-cols-3 gap-2 text-xs font-mono">
         <div className="flex flex-col"><span className="text-muted-foreground">Entry</span><span className="font-semibold">{signal.entry.toFixed(2)}</span></div>
         <div className="flex flex-col"><span className="text-destructive/80">Stop Loss</span><span className="font-semibold text-destructive">{signal.stopLoss.toFixed(2)}</span></div>

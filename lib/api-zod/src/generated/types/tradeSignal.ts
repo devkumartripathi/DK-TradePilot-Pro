@@ -5,8 +5,11 @@
  * Nifty AI Auto Signals API
  * OpenAPI spec version: 0.1.0
  */
+import type { ScoreFactor } from './scoreFactor';
+import type { SignalIndicators } from './signalIndicators';
 import type { TradeSignalConfidenceLabel } from './tradeSignalConfidenceLabel';
 import type { TradeSignalDirection } from './tradeSignalDirection';
+import type { TradeSignalOptionSignalType } from './tradeSignalOptionSignalType';
 import type { TradeSignalOptionType } from './tradeSignalOptionType';
 import type { TradeSignalStatus } from './tradeSignalStatus';
 import type { TradeSignalType } from './tradeSignalType';
@@ -15,6 +18,7 @@ export interface TradeSignal {
   id: string;
   type: TradeSignalType;
   instrument: string;
+  optionSignalType: TradeSignalOptionSignalType;
   direction: TradeSignalDirection;
   entry: number;
   stopLoss: number;
@@ -30,7 +34,12 @@ export interface TradeSignal {
   /** @nullable */
   strikePrice: number | null;
   /** @nullable */
+  optionLtp: number | null;
+  /** @nullable */
   expiry: string | null;
   status: TradeSignalStatus;
   timestamp: string;
+  indicators: SignalIndicators;
+  scoreFactors: ScoreFactor[];
+  telegramAlertSent: boolean;
 }

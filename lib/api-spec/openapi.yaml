@@ -626,12 +626,84 @@ components:
         generatedAt:
           type: string
 
+    SignalIndicators:
+      type: object
+      required:
+        - rsi
+        - atr
+        - ema20
+        - ema50
+        - vwap
+        - pcr
+        - vix
+        - callOI
+        - putOI
+        - volume
+        - rsiSignal
+        - emaSignal
+        - vwapPosition
+        - adx
+        - volumeSignal
+      properties:
+        rsi:
+          type: number
+        atr:
+          type: number
+        ema20:
+          type: number
+        ema50:
+          type: number
+        vwap:
+          type: number
+        pcr:
+          type: number
+        vix:
+          type: number
+        callOI:
+          type: number
+        putOI:
+          type: number
+        volume:
+          type: number
+        adx:
+          type: number
+        rsiSignal:
+          type: string
+          enum: ["OVERBOUGHT", "OVERSOLD", "NEUTRAL", "RISING", "FALLING"]
+        emaSignal:
+          type: string
+          enum: ["BULLISH", "BEARISH", "NEUTRAL"]
+        vwapPosition:
+          type: string
+          enum: ["ABOVE", "BELOW", "AT"]
+        volumeSignal:
+          type: string
+          enum: ["HIGH", "AVERAGE", "LOW"]
+
+    ScoreFactor:
+      type: object
+      required:
+        - name
+        - score
+        - maxScore
+        - signal
+      properties:
+        name:
+          type: string
+        score:
+          type: number
+        maxScore:
+          type: number
+        signal:
+          type: string
+
     TradeSignal:
       type: object
       required:
         - id
         - type
         - instrument
+        - optionSignalType
         - direction
         - entry
         - stopLoss
@@ -645,9 +717,13 @@ components:
         - smcSetup
         - optionType
         - strikePrice
+        - optionLtp
         - expiry
         - status
         - timestamp
+        - indicators
+        - scoreFactors
+        - telegramAlertSent
       properties:
         id:
           type: string
@@ -656,6 +732,9 @@ components:
           enum: ["INTRADAY", "POSITIONAL"]
         instrument:
           type: string
+        optionSignalType:
+          type: string
+          enum: ["CALL_BUY", "CALL_SELL", "PUT_BUY", "PUT_SELL"]
         direction:
           type: string
           enum: ["BUY", "SELL"]
@@ -685,6 +764,8 @@ components:
           enum: ["CE", "PE", "FUTURES", "SPOT"]
         strikePrice:
           type: ["number", "null"]
+        optionLtp:
+          type: ["number", "null"]
         expiry:
           type: ["string", "null"]
         status:
@@ -692,3 +773,11 @@ components:
           enum: ["ACTIVE", "HIT_TARGET1", "HIT_TARGET2", "HIT_TARGET3", "STOPPED_OUT", "EXPIRED"]
         timestamp:
           type: string
+        indicators:
+          $ref: "#/components/schemas/SignalIndicators"
+        scoreFactors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoreFactor"
+        telegramAlertSent:
+          type: boolean

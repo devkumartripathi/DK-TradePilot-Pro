@@ -216,6 +216,7 @@ export const GetTradeSignalsResponse = zod.object({
   "id": zod.string(),
   "type": zod.enum(['INTRADAY', 'POSITIONAL']),
   "instrument": zod.string(),
+  "optionSignalType": zod.enum(['CALL_BUY', 'CALL_SELL', 'PUT_BUY', 'PUT_SELL']),
   "direction": zod.enum(['BUY', 'SELL']),
   "entry": zod.number(),
   "stopLoss": zod.number(),
@@ -229,9 +230,34 @@ export const GetTradeSignalsResponse = zod.object({
   "smcSetup": zod.string(),
   "optionType": zod.enum(['CE', 'PE', 'FUTURES', 'SPOT']),
   "strikePrice": zod.number().nullable(),
+  "optionLtp": zod.number().nullable(),
   "expiry": zod.string().nullable(),
   "status": zod.enum(['ACTIVE', 'HIT_TARGET1', 'HIT_TARGET2', 'HIT_TARGET3', 'STOPPED_OUT', 'EXPIRED']),
-  "timestamp": zod.string()
+  "timestamp": zod.string(),
+  "indicators": zod.object({
+  "rsi": zod.number(),
+  "atr": zod.number(),
+  "ema20": zod.number(),
+  "ema50": zod.number(),
+  "vwap": zod.number(),
+  "pcr": zod.number(),
+  "vix": zod.number(),
+  "callOI": zod.number(),
+  "putOI": zod.number(),
+  "volume": zod.number(),
+  "adx": zod.number(),
+  "rsiSignal": zod.enum(['OVERBOUGHT', 'OVERSOLD', 'NEUTRAL', 'RISING', 'FALLING']),
+  "emaSignal": zod.enum(['BULLISH', 'BEARISH', 'NEUTRAL']),
+  "vwapPosition": zod.enum(['ABOVE', 'BELOW', 'AT']),
+  "volumeSignal": zod.enum(['HIGH', 'AVERAGE', 'LOW'])
+}),
+  "scoreFactors": zod.array(zod.object({
+  "name": zod.string(),
+  "score": zod.number(),
+  "maxScore": zod.number(),
+  "signal": zod.string()
+})),
+  "telegramAlertSent": zod.boolean()
 })),
   "noTradeZone": zod.boolean(),
   "noTradeReason": zod.string().nullable(),

@@ -332,6 +332,16 @@ export const TradeSignalType = {
   POSITIONAL: 'POSITIONAL',
 } as const;
 
+export type TradeSignalOptionSignalType = typeof TradeSignalOptionSignalType[keyof typeof TradeSignalOptionSignalType];
+
+
+export const TradeSignalOptionSignalType = {
+  CALL_BUY: 'CALL_BUY',
+  CALL_SELL: 'CALL_SELL',
+  PUT_BUY: 'PUT_BUY',
+  PUT_SELL: 'PUT_SELL',
+} as const;
+
 export type TradeSignalDirection = typeof TradeSignalDirection[keyof typeof TradeSignalDirection];
 
 
@@ -372,10 +382,74 @@ export const TradeSignalStatus = {
   EXPIRED: 'EXPIRED',
 } as const;
 
+export type SignalIndicatorsRsiSignal = typeof SignalIndicatorsRsiSignal[keyof typeof SignalIndicatorsRsiSignal];
+
+
+export const SignalIndicatorsRsiSignal = {
+  OVERBOUGHT: 'OVERBOUGHT',
+  OVERSOLD: 'OVERSOLD',
+  NEUTRAL: 'NEUTRAL',
+  RISING: 'RISING',
+  FALLING: 'FALLING',
+} as const;
+
+export type SignalIndicatorsEmaSignal = typeof SignalIndicatorsEmaSignal[keyof typeof SignalIndicatorsEmaSignal];
+
+
+export const SignalIndicatorsEmaSignal = {
+  BULLISH: 'BULLISH',
+  BEARISH: 'BEARISH',
+  NEUTRAL: 'NEUTRAL',
+} as const;
+
+export type SignalIndicatorsVwapPosition = typeof SignalIndicatorsVwapPosition[keyof typeof SignalIndicatorsVwapPosition];
+
+
+export const SignalIndicatorsVwapPosition = {
+  ABOVE: 'ABOVE',
+  BELOW: 'BELOW',
+  AT: 'AT',
+} as const;
+
+export type SignalIndicatorsVolumeSignal = typeof SignalIndicatorsVolumeSignal[keyof typeof SignalIndicatorsVolumeSignal];
+
+
+export const SignalIndicatorsVolumeSignal = {
+  HIGH: 'HIGH',
+  AVERAGE: 'AVERAGE',
+  LOW: 'LOW',
+} as const;
+
+export interface SignalIndicators {
+  rsi: number;
+  atr: number;
+  ema20: number;
+  ema50: number;
+  vwap: number;
+  pcr: number;
+  vix: number;
+  callOI: number;
+  putOI: number;
+  volume: number;
+  adx: number;
+  rsiSignal: SignalIndicatorsRsiSignal;
+  emaSignal: SignalIndicatorsEmaSignal;
+  vwapPosition: SignalIndicatorsVwapPosition;
+  volumeSignal: SignalIndicatorsVolumeSignal;
+}
+
+export interface ScoreFactor {
+  name: string;
+  score: number;
+  maxScore: number;
+  signal: string;
+}
+
 export interface TradeSignal {
   id: string;
   type: TradeSignalType;
   instrument: string;
+  optionSignalType: TradeSignalOptionSignalType;
   direction: TradeSignalDirection;
   entry: number;
   stopLoss: number;
@@ -391,9 +465,14 @@ export interface TradeSignal {
   /** @nullable */
   strikePrice: number | null;
   /** @nullable */
+  optionLtp: number | null;
+  /** @nullable */
   expiry: string | null;
   status: TradeSignalStatus;
   timestamp: string;
+  indicators: SignalIndicators;
+  scoreFactors: ScoreFactor[];
+  telegramAlertSent: boolean;
 }
 
 export interface TradeSignals {
