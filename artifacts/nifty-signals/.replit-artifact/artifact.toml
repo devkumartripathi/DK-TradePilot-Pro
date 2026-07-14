@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Nifty AI Auto Signals"
+version = "1.0.0"
+id = "artifacts/nifty-signals"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22687
+
+[services.development]
+run = "pnpm --filter @workspace/nifty-signals run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nifty-signals", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/nifty-signals/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22687"
+BASE_PATH = "/"

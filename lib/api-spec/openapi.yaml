@@ -1,22 +1,28 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Nifty AI Auto Signals API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: market
+    description: Market data
+  - name: smc
+    description: Smart Money Concepts analysis
+  - name: options
+    description: Option chain and metrics
+  - name: signals
+    description: Trade signals
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +30,120 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /market/nifty:
+    get:
+      operationId: getNiftyData
+      tags: [market]
+      summary: Get current Nifty 50 market data
+      responses:
+        "200":
+          description: Current Nifty 50 data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NiftyData"
+
+  /market/candles:
+    get:
+      operationId: getCandles
+      tags: [market]
+      summary: Get OHLCV candle data
+      parameters:
+        - name: timeframe
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["1m", "5m", "15m", "1h", "1d"]
+            default: "5m"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 100
+      responses:
+        "200":
+          description: Candle data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Candle"
+
+  /market/vwap:
+    get:
+      operationId: getVwap
+      tags: [market]
+      summary: Get VWAP and band data
+      responses:
+        "200":
+          description: VWAP data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VwapData"
+
+  /smc/analysis:
+    get:
+      operationId: getSmcAnalysis
+      tags: [smc]
+      summary: Get Smart Money Concepts analysis
+      responses:
+        "200":
+          description: Full SMC analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SmcAnalysis"
+
+  /options/chain:
+    get:
+      operationId: getOptionChain
+      tags: [options]
+      summary: Get option chain data
+      parameters:
+        - name: expiry
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Option chain data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptionChain"
+
+  /options/metrics:
+    get:
+      operationId: getOptionsMetrics
+      tags: [options]
+      summary: Get PCR, Max Pain, India VIX, OI summary
+      responses:
+        "200":
+          description: Options metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OptionsMetrics"
+
+  /signals/trade:
+    get:
+      operationId: getTradeSignals
+      tags: [signals]
+      summary: Get high-probability AI trade signals
+      responses:
+        "200":
+          description: Trade signals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeSignals"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +154,541 @@ components:
       required:
         - status
 
+    NiftyData:
+      type: object
+      required:
+        - ltp
+        - open
+        - high
+        - low
+        - close
+        - change
+        - changePercent
+        - volume
+        - dayHigh
+        - dayLow
+        - weekHigh52
+        - weekLow52
+        - marketStatus
+        - timestamp
+        - trend
+      properties:
+        ltp:
+          type: number
+        open:
+          type: number
+        high:
+          type: number
+        low:
+          type: number
+        close:
+          type: number
+        change:
+          type: number
+        changePercent:
+          type: number
+        volume:
+          type: number
+        dayHigh:
+          type: number
+        dayLow:
+          type: number
+        weekHigh52:
+          type: number
+        weekLow52:
+          type: number
+        marketStatus:
+          type: string
+          enum: ["OPEN", "CLOSED", "PRE_OPEN", "POST_CLOSE"]
+        timestamp:
+          type: string
+        trend:
+          type: string
+          enum: ["BULLISH", "BEARISH", "NEUTRAL"]
+
+    Candle:
+      type: object
+      required:
+        - time
+        - open
+        - high
+        - low
+        - close
+        - volume
+      properties:
+        time:
+          type: string
+        open:
+          type: number
+        high:
+          type: number
+        low:
+          type: number
+        close:
+          type: number
+        volume:
+          type: number
+
+    VwapData:
+      type: object
+      required:
+        - vwap
+        - upperBand1
+        - upperBand2
+        - lowerBand1
+        - lowerBand2
+        - currentPrice
+        - priceVsVwap
+        - vwapTrend
+      properties:
+        vwap:
+          type: number
+        upperBand1:
+          type: number
+        upperBand2:
+          type: number
+        lowerBand1:
+          type: number
+        lowerBand2:
+          type: number
+        currentPrice:
+          type: number
+        priceVsVwap:
+          type: string
+          enum: ["ABOVE", "BELOW", "AT"]
+        vwapTrend:
+          type: string
+          enum: ["RISING", "FALLING", "FLAT"]
+
+    SmcAnalysis:
+      type: object
+      required:
+        - marketStructure
+        - bos
+        - choch
+        - liquidity
+        - orderBlocks
+        - fairValueGaps
+        - bias
+        - keyLevels
+      properties:
+        marketStructure:
+          $ref: "#/components/schemas/MarketStructure"
+        bos:
+          type: array
+          items:
+            $ref: "#/components/schemas/StructureEvent"
+        choch:
+          type: array
+          items:
+            $ref: "#/components/schemas/StructureEvent"
+        liquidity:
+          $ref: "#/components/schemas/LiquidityData"
+        orderBlocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderBlock"
+        fairValueGaps:
+          type: array
+          items:
+            $ref: "#/components/schemas/FairValueGap"
+        bias:
+          type: string
+          enum: ["BULLISH", "BEARISH", "NEUTRAL"]
+        keyLevels:
+          type: array
+          items:
+            $ref: "#/components/schemas/KeyLevel"
+
+    MarketStructure:
+      type: object
+      required:
+        - trend
+        - higherHigh
+        - higherLow
+        - lowerHigh
+        - lowerLow
+        - currentSwingHigh
+        - currentSwingLow
+        - phase
+      properties:
+        trend:
+          type: string
+          enum: ["UPTREND", "DOWNTREND", "SIDEWAYS"]
+        higherHigh:
+          type: boolean
+        higherLow:
+          type: boolean
+        lowerHigh:
+          type: boolean
+        lowerLow:
+          type: boolean
+        currentSwingHigh:
+          type: number
+        currentSwingLow:
+          type: number
+        phase:
+          type: string
+          enum: ["ACCUMULATION", "DISTRIBUTION", "MARKUP", "MARKDOWN", "CONSOLIDATION"]
+
+    StructureEvent:
+      type: object
+      required:
+        - type
+        - level
+        - time
+        - direction
+        - strength
+      properties:
+        type:
+          type: string
+        level:
+          type: number
+        time:
+          type: string
+        direction:
+          type: string
+          enum: ["BULLISH", "BEARISH"]
+        strength:
+          type: string
+          enum: ["STRONG", "WEAK"]
+
+    LiquidityData:
+      type: object
+      required:
+        - buySideLiquidity
+        - sellSideLiquidity
+        - equalHighs
+        - equalLows
+        - liquiditySweeps
+      properties:
+        buySideLiquidity:
+          type: array
+          items:
+            type: number
+        sellSideLiquidity:
+          type: array
+          items:
+            type: number
+        equalHighs:
+          type: array
+          items:
+            type: number
+        equalLows:
+          type: array
+          items:
+            type: number
+        liquiditySweeps:
+          type: array
+          items:
+            $ref: "#/components/schemas/LiquiditySweep"
+
+    LiquiditySweep:
+      type: object
+      required:
+        - level
+        - time
+        - type
+        - swept
+      properties:
+        level:
+          type: number
+        time:
+          type: string
+        type:
+          type: string
+          enum: ["BSL_SWEEP", "SSL_SWEEP"]
+        swept:
+          type: boolean
+
+    OrderBlock:
+      type: object
+      required:
+        - id
+        - top
+        - bottom
+        - type
+        - strength
+        - timeframe
+        - mitigated
+        - time
+      properties:
+        id:
+          type: string
+        top:
+          type: number
+        bottom:
+          type: number
+        type:
+          type: string
+          enum: ["BULLISH", "BEARISH"]
+        strength:
+          type: string
+          enum: ["STRONG", "MODERATE", "WEAK"]
+        timeframe:
+          type: string
+        mitigated:
+          type: boolean
+        time:
+          type: string
+
+    FairValueGap:
+      type: object
+      required:
+        - id
+        - top
+        - bottom
+        - type
+        - filled
+        - fillPercent
+        - time
+      properties:
+        id:
+          type: string
+        top:
+          type: number
+        bottom:
+          type: number
+        type:
+          type: string
+          enum: ["BULLISH", "BEARISH"]
+        filled:
+          type: boolean
+        fillPercent:
+          type: number
+        time:
+          type: string
+
+    KeyLevel:
+      type: object
+      required:
+        - level
+        - type
+        - strength
+        - label
+      properties:
+        level:
+          type: number
+        type:
+          type: string
+          enum: ["SUPPORT", "RESISTANCE", "PIVOT"]
+        strength:
+          type: string
+          enum: ["STRONG", "MODERATE", "WEAK"]
+        label:
+          type: string
+
+    OptionChain:
+      type: object
+      required:
+        - expiry
+        - spotPrice
+        - strikes
+        - totalCallOI
+        - totalPutOI
+      properties:
+        expiry:
+          type: string
+        spotPrice:
+          type: number
+        strikes:
+          type: array
+          items:
+            $ref: "#/components/schemas/OptionStrike"
+        totalCallOI:
+          type: number
+        totalPutOI:
+          type: number
+
+    OptionStrike:
+      type: object
+      required:
+        - strikePrice
+        - call
+        - put
+      properties:
+        strikePrice:
+          type: number
+        call:
+          $ref: "#/components/schemas/OptionData"
+        put:
+          $ref: "#/components/schemas/OptionData"
+
+    OptionData:
+      type: object
+      required:
+        - ltp
+        - iv
+        - delta
+        - gamma
+        - theta
+        - vega
+        - oi
+        - oiChange
+        - volume
+        - bidPrice
+        - askPrice
+      properties:
+        ltp:
+          type: number
+        iv:
+          type: number
+        delta:
+          type: number
+        gamma:
+          type: number
+        theta:
+          type: number
+        vega:
+          type: number
+        oi:
+          type: number
+        oiChange:
+          type: number
+        volume:
+          type: number
+        bidPrice:
+          type: number
+        askPrice:
+          type: number
+
+    OptionsMetrics:
+      type: object
+      required:
+        - pcr
+        - pcrSignal
+        - maxPain
+        - indiaVix
+        - vixChange
+        - vixSignal
+        - totalCallOI
+        - totalPutOI
+        - oiRatio
+        - putCallBuildupSignal
+        - supportLevel
+        - resistanceLevel
+        - expiries
+      properties:
+        pcr:
+          type: number
+        pcrSignal:
+          type: string
+          enum: ["BULLISH", "BEARISH", "NEUTRAL"]
+        maxPain:
+          type: number
+        indiaVix:
+          type: number
+        vixChange:
+          type: number
+        vixSignal:
+          type: string
+          enum: ["HIGH_VOLATILITY", "LOW_VOLATILITY", "NORMAL"]
+        totalCallOI:
+          type: number
+        totalPutOI:
+          type: number
+        oiRatio:
+          type: number
+        putCallBuildupSignal:
+          type: string
+        supportLevel:
+          type: number
+        resistanceLevel:
+          type: number
+        expiries:
+          type: array
+          items:
+            type: string
+
+    TradeSignals:
+      type: object
+      required:
+        - signals
+        - noTradeZone
+        - noTradeReason
+        - marketBias
+        - sessionTime
+        - generatedAt
+      properties:
+        signals:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeSignal"
+        noTradeZone:
+          type: boolean
+        noTradeReason:
+          type: ["string", "null"]
+        marketBias:
+          type: string
+          enum: ["BULLISH", "BEARISH", "NEUTRAL"]
+        sessionTime:
+          type: string
+        generatedAt:
+          type: string
+
+    TradeSignal:
+      type: object
+      required:
+        - id
+        - type
+        - instrument
+        - direction
+        - entry
+        - stopLoss
+        - target1
+        - target2
+        - target3
+        - riskReward
+        - confidenceScore
+        - confidenceLabel
+        - rationale
+        - smcSetup
+        - optionType
+        - strikePrice
+        - expiry
+        - status
+        - timestamp
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["INTRADAY", "POSITIONAL"]
+        instrument:
+          type: string
+        direction:
+          type: string
+          enum: ["BUY", "SELL"]
+        entry:
+          type: number
+        stopLoss:
+          type: number
+        target1:
+          type: number
+        target2:
+          type: number
+        target3:
+          type: number
+        riskReward:
+          type: number
+        confidenceScore:
+          type: number
+        confidenceLabel:
+          type: string
+          enum: ["VERY HIGH", "HIGH", "MODERATE", "LOW"]
+        rationale:
+          type: string
+        smcSetup:
+          type: string
+        optionType:
+          type: string
+          enum: ["CE", "PE", "FUTURES", "SPOT"]
+        strikePrice:
+          type: ["number", "null"]
+        expiry:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: ["ACTIVE", "HIT_TARGET1", "HIT_TARGET2", "HIT_TARGET3", "STOPPED_OUT", "EXPIRED"]
+        timestamp:
+          type: string
