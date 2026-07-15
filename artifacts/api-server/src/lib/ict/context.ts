@@ -49,8 +49,8 @@ export function buildIctContext(
   const lastChoch = chochStamped.at(-1) ?? null;
   const lastMss   = mss.at(-1)          ?? null;
 
-  const bslSweep = recentBSLSweep(liqSweeps, total, 10);
-  const sslSweep = recentSSLSweep(liqSweeps, total, 10);
+  const bslSweep = recentBSLSweep(liqSweeps, total, 20);
+  const sslSweep = recentSSLSweep(liqSweeps, total, 20);
 
   const nBullOB = nearestOB(obs, "BULLISH", currentPrice);
   const nBearOB = nearestOB(obs, "BEARISH", currentPrice);
