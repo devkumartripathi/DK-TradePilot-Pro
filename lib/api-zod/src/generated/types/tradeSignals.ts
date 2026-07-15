@@ -16,4 +16,6 @@ export interface TradeSignals {
   marketBias: TradeSignalsMarketBias;
   sessionTime: string;
   generatedAt: string;
+  brokerSource?: string;
+  brokerName?: string;
 }

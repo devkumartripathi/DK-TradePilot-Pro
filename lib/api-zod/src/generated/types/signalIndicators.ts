@@ -22,6 +22,9 @@ export interface SignalIndicators {
   putOI: number;
   volume: number;
   adx: number;
+  maxPain: number;
+  atmIV: number;
+  atmDelta: number;
   rsiSignal: SignalIndicatorsRsiSignal;
   emaSignal: SignalIndicatorsEmaSignal;
   vwapPosition: SignalIndicatorsVwapPosition;

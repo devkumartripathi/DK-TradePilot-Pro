@@ -625,6 +625,10 @@ components:
           type: string
         generatedAt:
           type: string
+        brokerSource:
+          type: string
+        brokerName:
+          type: string
 
     SignalIndicators:
       type: object
@@ -643,6 +647,9 @@ components:
         - emaSignal
         - vwapPosition
         - adx
+        - maxPain
+        - atmIV
+        - atmDelta
         - volumeSignal
       properties:
         rsi:
@@ -667,6 +674,12 @@ components:
           type: number
         adx:
           type: number
+        maxPain:
+          type: number
+        atmIV:
+          type: number
+        atmDelta:
+          type: number
         rsiSignal:
           type: string
           enum: ["OVERBOUGHT", "OVERSOLD", "NEUTRAL", "RISING", "FALLING"]
@@ -687,6 +700,7 @@ components:
         - score
         - maxScore
         - signal
+        - category
       properties:
         name:
           type: string
@@ -696,6 +710,9 @@ components:
           type: number
         signal:
           type: string
+        category:
+          type: string
+          enum: ["PRIMARY", "CONFIRM", "SUPPORT"]
 
     TradeSignal:
       type: object
@@ -781,3 +798,9 @@ components:
             $ref: "#/components/schemas/ScoreFactor"
         telegramAlertSent:
           type: boolean
+        brokerSource:
+          type: string
+          enum: ["kite", "simulator"]
+        dataQuality:
+          type: string
+          enum: ["LIVE", "SIMULATED"]

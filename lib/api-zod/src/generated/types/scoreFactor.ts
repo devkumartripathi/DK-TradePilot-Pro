@@ -5,10 +5,12 @@
  * Nifty AI Auto Signals API
  * OpenAPI spec version: 0.1.0
  */
+import type { ScoreFactorCategory } from './scoreFactorCategory';
 
 export interface ScoreFactor {
   name: string;
   score: number;
   maxScore: number;
   signal: string;
+  category: ScoreFactorCategory;
 }

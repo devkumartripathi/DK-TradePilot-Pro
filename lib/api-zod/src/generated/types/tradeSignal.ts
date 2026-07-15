@@ -7,7 +7,9 @@
  */
 import type { ScoreFactor } from './scoreFactor';
 import type { SignalIndicators } from './signalIndicators';
+import type { TradeSignalBrokerSource } from './tradeSignalBrokerSource';
 import type { TradeSignalConfidenceLabel } from './tradeSignalConfidenceLabel';
+import type { TradeSignalDataQuality } from './tradeSignalDataQuality';
 import type { TradeSignalDirection } from './tradeSignalDirection';
 import type { TradeSignalOptionSignalType } from './tradeSignalOptionSignalType';
 import type { TradeSignalOptionType } from './tradeSignalOptionType';
@@ -42,4 +44,6 @@ export interface TradeSignal {
   indicators: SignalIndicators;
   scoreFactors: ScoreFactor[];
   telegramAlertSent: boolean;
+  brokerSource?: TradeSignalBrokerSource;
+  dataQuality?: TradeSignalDataQuality;
 }

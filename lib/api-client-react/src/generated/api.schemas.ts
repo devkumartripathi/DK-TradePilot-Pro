@@ -432,18 +432,47 @@ export interface SignalIndicators {
   putOI: number;
   volume: number;
   adx: number;
+  maxPain: number;
+  atmIV: number;
+  atmDelta: number;
   rsiSignal: SignalIndicatorsRsiSignal;
   emaSignal: SignalIndicatorsEmaSignal;
   vwapPosition: SignalIndicatorsVwapPosition;
   volumeSignal: SignalIndicatorsVolumeSignal;
 }
 
+export type ScoreFactorCategory = typeof ScoreFactorCategory[keyof typeof ScoreFactorCategory];
+
+
+export const ScoreFactorCategory = {
+  PRIMARY: 'PRIMARY',
+  CONFIRM: 'CONFIRM',
+  SUPPORT: 'SUPPORT',
+} as const;
+
 export interface ScoreFactor {
   name: string;
   score: number;
   maxScore: number;
   signal: string;
+  category: ScoreFactorCategory;
 }
+
+export type TradeSignalBrokerSource = typeof TradeSignalBrokerSource[keyof typeof TradeSignalBrokerSource];
+
+
+export const TradeSignalBrokerSource = {
+  kite: 'kite',
+  simulator: 'simulator',
+} as const;
+
+export type TradeSignalDataQuality = typeof TradeSignalDataQuality[keyof typeof TradeSignalDataQuality];
+
+
+export const TradeSignalDataQuality = {
+  LIVE: 'LIVE',
+  SIMULATED: 'SIMULATED',
+} as const;
 
 export interface TradeSignal {
   id: string;
@@ -473,6 +502,8 @@ export interface TradeSignal {
   indicators: SignalIndicators;
   scoreFactors: ScoreFactor[];
   telegramAlertSent: boolean;
+  brokerSource?: TradeSignalBrokerSource;
+  dataQuality?: TradeSignalDataQuality;
 }
 
 export interface TradeSignals {
@@ -483,6 +514,8 @@ export interface TradeSignals {
   marketBias: TradeSignalsMarketBias;
   sessionTime: string;
   generatedAt: string;
+  brokerSource?: string;
+  brokerName?: string;
 }
 
 export type GetCandlesParams = {

@@ -246,6 +246,9 @@ export const GetTradeSignalsResponse = zod.object({
   "putOI": zod.number(),
   "volume": zod.number(),
   "adx": zod.number(),
+  "maxPain": zod.number(),
+  "atmIV": zod.number(),
+  "atmDelta": zod.number(),
   "rsiSignal": zod.enum(['OVERBOUGHT', 'OVERSOLD', 'NEUTRAL', 'RISING', 'FALLING']),
   "emaSignal": zod.enum(['BULLISH', 'BEARISH', 'NEUTRAL']),
   "vwapPosition": zod.enum(['ABOVE', 'BELOW', 'AT']),
@@ -255,15 +258,20 @@ export const GetTradeSignalsResponse = zod.object({
   "name": zod.string(),
   "score": zod.number(),
   "maxScore": zod.number(),
-  "signal": zod.string()
+  "signal": zod.string(),
+  "category": zod.enum(['PRIMARY', 'CONFIRM', 'SUPPORT'])
 })),
-  "telegramAlertSent": zod.boolean()
+  "telegramAlertSent": zod.boolean(),
+  "brokerSource": zod.enum(['kite', 'simulator']).optional(),
+  "dataQuality": zod.enum(['LIVE', 'SIMULATED']).optional()
 })),
   "noTradeZone": zod.boolean(),
   "noTradeReason": zod.string().nullable(),
   "marketBias": zod.enum(['BULLISH', 'BEARISH', 'NEUTRAL']),
   "sessionTime": zod.string(),
-  "generatedAt": zod.string()
+  "generatedAt": zod.string(),
+  "brokerSource": zod.string().optional(),
+  "brokerName": zod.string().optional()
 })
 
 
