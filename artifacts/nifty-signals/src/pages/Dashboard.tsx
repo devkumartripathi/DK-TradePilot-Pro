@@ -106,17 +106,19 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <MetricCard
           label="India VIX"
-          value={metrics ? metrics.indiaVix.toFixed(2) : "—"}
-          sub={metrics ? <span className={metrics.vixChange >= 0 ? "text-destructive" : "text-success"}>{metrics.vixChange >= 0 ? "+" : ""}{metrics.vixChange.toFixed(2)} {metrics.vixSignal.replace("_", " ")}</span> : undefined}
+          value={metrics?.indiaVix != null? metrics.indiaVix.toFixed(2) : "--"}
+
+          
+          sub={metrics ? <span className={metrics.vixChange >= 0 ? "text-destructive" : "text-success"}>{metrics.vixChange >= 0 ? "+" : ""}{(metrics.vixChange ?? 0).toFixed(2)} {" "} {(metrics.vixSignal ?? " ").replace("_", " ")}</span> : undefined}
           icon={Activity}
           variant={metrics && metrics.indiaVix > 18 ? "destructive" : metrics && metrics.indiaVix < 14 ? "success" : "warning"}
         />
         <MetricCard
           label="PCR"
-          value={metrics ? metrics.pcr.toFixed(2) : "—"}
+          value={metrics ? (metrics.pcr ?? 0).toFixed(2) : "—"}
           sub={metrics ? <Badge variant={metrics.pcrSignal === "BULLISH" ? "success" : metrics.pcrSignal === "BEARISH" ? "destructive" : "secondary"} className="text-[10px] px-1.5 py-0">{metrics.pcrSignal}</Badge> : undefined}
           icon={BarChart2}
-          variant={metrics && metrics.pcrSignal === "BULLISH" ? "success" : metrics && metrics.pcrSignal === "BEARISH" ? "destructive" : undefined}
+          variant={metrics && (metrics.pcrSignal ?? "") === "BULLISH" ? "success" : metrics && metrics.pcrSignal === "BEARISH" ? "destructive" : undefined}
         />
         <MetricCard
           label="Max Pain"
@@ -150,20 +152,28 @@ export default function Dashboard() {
               <div className="rounded-lg border border-border bg-card p-4">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Market Structure</span>
-                  <Badge variant={smc.marketStructure.trend === "UPTREND" ? "success" : smc.marketStructure.trend === "DOWNTREND" ? "destructive" : "secondary"}>
-                    {smc.marketStructure.trend}
-                  </Badge>
+                <Badge
+  variant={
+    (smc?.marketStructure?.trend ?? "") === "UPTREND"
+      ? "success"
+      : (smc?.marketStructure?.trend ?? "") === "DOWNTREND"
+      ? "destructive"
+      : "secondary"
+  }
+>
+  {smc?.marketStructure?.trend ?? "N/A"}
+</Badge>  
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs font-mono mb-3">
-                  <div><span className="text-muted-foreground">Phase: </span><span className="text-foreground">{smc.marketStructure.phase}</span></div>
-                  <div><span className="text-muted-foreground">Swing H: </span><span className="text-success">{smc.marketStructure.currentSwingHigh.toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Phase: </span><span className="text-foreground">{smc?.marketStructure?.phase ?? "NA"}</span></div>
+                  <div><span className="text-muted-foreground">Swing H: </span><span className="text-success">{(smc?.marketStructure?.currentSwingHigh ?? 0).toFixed(2)}</span></div>
                   <div className="flex gap-2">
-                    {smc.marketStructure.higherHigh && <span className="text-success">HH</span>}
-                    {smc.marketStructure.higherLow && <span className="text-success">HL</span>}
-                    {smc.marketStructure.lowerHigh && <span className="text-destructive">LH</span>}
-                    {smc.marketStructure.lowerLow && <span className="text-destructive">LL</span>}
+                    {smc?.marketStructure?.higherHigh && <span className="text-success">HH</span>}
+                    {smc?.marketStructure?.higherLow && <span className="text-success">HL</span>}
+                    {smc?.marketStructure?.lowerHigh && <span className="text-destructive">LH</span>}
+                    {smc?.marketStructure?.lowerLow && <span className="text-destructive">LL</span>}
                   </div>
-                  <div><span className="text-muted-foreground">Swing L: </span><span className="text-destructive">{smc.marketStructure.currentSwingLow.toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Swing L: </span><span className="text-destructive">{(smc?.marketStructure?.currentSwingLow ?? 0).toFixed(2)}</span></div>
                 </div>
               </div>
 
@@ -171,7 +181,7 @@ export default function Dashboard() {
               <div className="rounded-lg border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Active Order Blocks</div>
                 <div className="flex flex-col gap-2">
-                  {smc.orderBlocks.filter(ob => !ob.mitigated).slice(0, 3).map(ob => (
+                  {(smc?.orderBlocks ?? []).filter(ob => !ob.mitigated).slice(0, 3).map(ob => (
                     <div key={ob.id} className="flex items-center justify-between text-xs font-mono">
                       <Badge variant={ob.type === "BULLISH" ? "success" : "destructive"} className="text-[10px] px-1.5">{ob.type}</Badge>
                       <span className="text-muted-foreground">{ob.bottom.toFixed(1)} – {ob.top.toFixed(1)}</span>
@@ -186,7 +196,7 @@ export default function Dashboard() {
               <div className="rounded-lg border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Key Levels</div>
                 <div className="flex flex-col gap-1.5">
-                  {smc.keyLevels.slice(0, 4).map((kl, i) => (
+                  {(smc?.keyLevels ?? []).slice(0, 4).map((kl, i) => (
                     <div key={i} className="flex items-center justify-between text-xs font-mono">
                       <span className={cn("font-semibold", kl.type === "SUPPORT" ? "text-success" : kl.type === "RESISTANCE" ? "text-destructive" : "text-primary")}>{kl.type}</span>
                       <span>{kl.level.toFixed(2)}</span>

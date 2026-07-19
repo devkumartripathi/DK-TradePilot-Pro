@@ -52,8 +52,23 @@ export function generateNiftyData() {
 // ── Candles ───────────────────────────────────────────────────────────────────
 
 export function generateCandles(timeframe: string, limit: number) {
-  const ms: Record<string, number> = { "1m": 60e3, "5m": 300e3, "15m": 900e3, "1h": 3600e3, "1d": 86400e3 };
-  const interval = ms[timeframe] ?? 300e3;
+  const ms: Record<string, number> = {
+  "1m": 60e3,
+  "3m": 180e3,
+  "5m": 300e3,
+  "10m": 600e3,
+  "15m": 900e3,
+  "30m": 1800e3,
+  "45m": 2700e3,
+  "1h": 3600e3,
+  "2h": 7200e3,
+  "4h": 14400e3,
+  "1d": 86400e3,
+  "1w": 604800e3,
+  "1M": 2592000000,
+  "3M": 7776000000
+};
+  const interval = ms[timeframe] ?? 60e3;
   let price = baseNifty;
   const now = Date.now();
   return Array.from({ length: limit + 1 }, (_, idx) => {

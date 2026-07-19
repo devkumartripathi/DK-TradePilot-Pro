@@ -2,15 +2,45 @@ import * as React from "react"
 import { useGetCandles, useGetVwap, getGetCandlesQueryKey, getGetVwapQueryKey } from "@workspace/api-client-react"
 import { Badge } from "@/components/ui/badge"
 import { cn, formatCurrency } from "@/lib/utils"
+import TradingViewChart from "@/components/TradingViewChart";
 import { BarChart2, TrendingDown, TrendingUp } from "lucide-react"
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, Cell
 } from "recharts"
 
-type Timeframe = "1m" | "5m" | "15m" | "1h" | "1d"
+type Timeframe =
+  | "1m"
+  | "3m"
+  | "5m"
+  | "10m"
+  | "15m"
+  | "30m"
+  | "45m"
+  | "1h"
+  | "2h"
+  | "4h"
+  | "1d"
+  | "1w"
+  | "1M"
+  | "3M"
 
-const TIMEFRAMES: Timeframe[] = ["1m", "5m", "15m", "1h", "1d"]
+const TIMEFRAMES: Timeframe[] = [
+  "1m",
+  "3m",
+  "5m",
+  "10m",
+  "15m",
+  "30m",
+  "45m",
+  "1h",
+  "2h",
+  "4h",
+  "1d",
+  "1w",
+  "1M",
+  "3M",
+]
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { time: string; open: number; high: number; low: number; close: number; volume: number } }> }) {
   if (!active || !payload?.length) return null
@@ -32,14 +62,39 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
 
 export default function Market() {
   const [timeframe, setTimeframe] = React.useState<Timeframe>("5m")
-  const limit = timeframe === "1d" ? 60 : timeframe === "1h" ? 72 : 80
+const limit =
+  timeframe === "1m" ? 120 :
+  timeframe === "3m" ? 120 :
+  timeframe === "5m" ? 120 :
+  timeframe === "10m" ? 100 :
+  timeframe === "15m" ? 100 :
+  timeframe === "30m" ? 80 :
+  timeframe === "45m" ? 80 :
+  timeframe === "1h" ? 72 :
+  timeframe === "2h" ? 60 :
+  timeframe === "4h" ? 60 :
+  timeframe === "1d" ? 90 :
+  timeframe === "1w" ? 104 :
+  timeframe === "1M" ? 120 :
+  60
 
-  const { data: candles } = useGetCandles(
-    { timeframe, limit },
-    { query: { refetchInterval: 5000, queryKey: getGetCandlesQueryKey({ timeframe, limit }) } }
-  )
+ const { data: candles } = useGetCandles(
+  {
+    timeframe: timeframe as any,
+    limit,
+  },
+  {
+    query: {
+      refetchInterval: 1000,
+      queryKey: getGetCandlesQueryKey({
+        timeframe: timeframe as any,
+        limit,
+      }),
+    },
+  }
+)
   const { data: vwap } = useGetVwap({
-    query: { refetchInterval: 5000, queryKey: getGetVwapQueryKey() }
+    query: { refetchInterval: 1000, queryKey: getGetVwapQueryKey() }
   })
 
   const chartData = (candles ?? []).map(c => ({
@@ -131,82 +186,33 @@ export default function Market() {
       )}
 
       {/* Candlestick Chart */}
-      <div className="rounded-lg border border-border bg-card p-4">
-        <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-4">
-          Nifty 50 · {timeframe} Chart
-          {lastCandle && (
-            <span className={cn("ml-3 font-mono font-bold", lastCandle.isUp ? "text-success" : "text-destructive")}>
-              {lastCandle.close.toFixed(2)}
-            </span>
-          )}
-        </div>
-        {!candles ? (
-          <div className="h-80 animate-pulse bg-muted rounded" />
-        ) : (
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis
-                  dataKey="time"
-                  tick={{ fill: "hsl(220 10% 50%)", fontSize: 10, fontFamily: "JetBrains Mono, monospace" }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={t => {
-                    const d = new Date(t)
-                    if (timeframe === "1d") return d.toLocaleDateString("en-IN", { month: "short", day: "numeric" })
-                    return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false })
-                  }}
-                  interval={Math.floor(chartData.length / 8)}
-                />
-                <YAxis
-                  domain={[yMin ?? "auto", yMax ?? "auto"]}
-                  tick={{ fill: "hsl(220 10% 50%)", fontSize: 10, fontFamily: "JetBrains Mono, monospace" }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={v => v.toFixed(0)}
-                  width={60}
-                />
-                <Tooltip content={<CustomTooltip />} />
-
-                {/* VWAP reference lines */}
-                {vwap && (
-                  <>
-                    <ReferenceLine y={vwap.vwap} stroke="hsl(217 91% 60%)" strokeDasharray="6 3" strokeWidth={1.5} label={{ value: "VWAP", fill: "hsl(217 91% 60%)", fontSize: 9, position: "right" }} />
-                    <ReferenceLine y={vwap.upperBand1} stroke="hsl(38 92% 50%)" strokeDasharray="4 4" strokeWidth={1} />
-                    <ReferenceLine y={vwap.upperBand2} stroke="hsl(348 83% 47%)" strokeDasharray="4 4" strokeWidth={1} />
-                    <ReferenceLine y={vwap.lowerBand1} stroke="hsl(38 92% 50%)" strokeDasharray="4 4" strokeWidth={1} />
-                    <ReferenceLine y={vwap.lowerBand2} stroke="hsl(142 71% 45%)" strokeDasharray="4 4" strokeWidth={1} />
-                  </>
-                )}
-
-                {/* Wicks (high-low) as thin bars */}
-                <Bar dataKey="high" stackId="wick" fill="transparent" />
-                <Bar dataKey="low" stackId="wick" fill="transparent" />
-
-                {/* Candle bodies */}
-                <Bar dataKey="close" name="Close" maxBarSize={8}>
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.isUp ? "hsl(142 71% 45%)" : "hsl(348 83% 47%)"}
-                    />
-                  ))}
-                </Bar>
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
+<div className="rounded-lg border border-border bg-card p-4">
+  <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-4">
+    Nifty 50 · {timeframe} Chart
+    {lastCandle && (
+      <span
+        className={cn(
+          "ml-3 font-mono font-bold",
+          lastCandle.isUp ? "text-success" : "text-destructive"
         )}
-        <div className="flex items-center gap-4 mt-3 text-[10px] text-muted-foreground">
-          <div className="flex items-center gap-1"><span className="w-3 h-0.5 bg-primary inline-block" /> VWAP</div>
-          <div className="flex items-center gap-1"><span className="w-3 h-0.5 bg-warning inline-block" /> Band 1</div>
-          <div className="flex items-center gap-1"><span className="w-3 h-0.5 bg-destructive inline-block" /> Band 2 (Upper)</div>
-          <div className="flex items-center gap-1"><span className="w-3 h-0.5 bg-success inline-block" /> Band 2 (Lower)</div>
-          <div className="flex items-center gap-1"><span className="w-3 h-3 bg-success/70 rounded-sm inline-block" /> Bullish</div>
-          <div className="flex items-center gap-1"><span className="w-3 h-3 bg-destructive/70 rounded-sm inline-block" /> Bearish</div>
-        </div>
-      </div>
+      >
+        {lastCandle.close.toFixed(2)}
+      </span>
+    )}
+  </div>
 
+  {!candles ? (
+    <div className="h-80 animate-pulse bg-muted rounded" />
+  ) : (
+   <TradingViewChart candles={candles} />
+  )}
+
+  <div className="flex items-center gap-4 mt-3 text-[10px] text-muted-foreground">
+    <div className="flex items-center gap-1">
+      TradingView Chart (Work in Progress)
+    </div>
+</div>
+</div>
       {/* Volume Bar Chart */}
       {candles && (
         <div className="rounded-lg border border-border bg-card p-4">
@@ -230,5 +236,5 @@ export default function Market() {
         </div>
       )}
     </div>
-  )
+)
 }

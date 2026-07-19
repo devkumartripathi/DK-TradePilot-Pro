@@ -8,7 +8,8 @@ export function NiftyTicker() {
   const { data: nifty, isFetching } = useGetNiftyData({
     query: { refetchInterval: 3000, queryKey: getGetNiftyDataQueryKey() }
   });
-
+console.log(nifty);
+console.log("Nifty DATA =",nifty);
   const [time, setTime] = React.useState(new Date());
   React.useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -42,10 +43,10 @@ export function NiftyTicker() {
 
         <div className="hidden sm:grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-0.5 text-sm font-mono">
           {[
-            { label: "Open", value: nifty.open.toFixed(2), color: "" },
-            { label: "High", value: nifty.dayHigh.toFixed(2), color: "text-success" },
-            { label: "Low", value: nifty.dayLow.toFixed(2), color: "text-destructive" },
-            { label: "Prev", value: nifty.close.toFixed(2), color: "" },
+            { label: "Open", value: (nifty.open ?? 0).toFixed(2), color: "" },
+            { label: "High", value: (nifty.dayHigh ?? 0).toFixed(2), color: "text-success" },
+            { label: "Low", value: (nifty.dayLow ?? 0).toFixed(2), color: "text-destructive" },
+            { label: "Prev", value: (nifty.close ?? 0).toFixed(2), color: "" },
           ].map(({ label, value, color }) => (
             <div key={label} className="flex flex-col">
               <span className="text-[10px] text-muted-foreground font-sans uppercase tracking-wider">{label}</span>
@@ -57,11 +58,11 @@ export function NiftyTicker() {
         <div className="hidden lg:grid grid-cols-2 gap-x-6 gap-y-0.5 text-sm font-mono">
           <div className="flex flex-col">
             <span className="text-[10px] text-muted-foreground font-sans uppercase tracking-wider">52W High</span>
-            <span className="text-success">{nifty.weekHigh52.toFixed(2)}</span>
+            <span className="text-success">{(nifty.weekHigh52 ?? 0).toFixed(2)}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] text-muted-foreground font-sans uppercase tracking-wider">52W Low</span>
-            <span className="text-destructive">{nifty.weekLow52.toFixed(2)}</span>
+            <span className="text-destructive"> {(nifty.weekLow52 ?? 0).toFixed(2)}</span>
           </div>
         </div>
       </div>

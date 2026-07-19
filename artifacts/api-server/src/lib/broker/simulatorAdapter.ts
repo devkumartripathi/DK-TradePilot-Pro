@@ -61,8 +61,8 @@ function generateCandles(regime: Regime, basePrice: number, count = 80): OHLCV[]
   const candles: OHLCV[] = [];
   let price = basePrice;
   const now = Date.now();
-  const candleMs = 15 * 60_000; // 15 min
-
+  const candleMs = 1_000; // 1 Second
+ 
   // Candle builder helper
   const makeCandle = (idx: number, open: number, move: number, wick = 0.4): OHLCV => {
     const close = r2(open + move);
@@ -335,7 +335,7 @@ export class SimulatorAdapter implements BrokerAdapter {
 
     const candles15m = generateCandles(regime, spot * 0.97, 80);
     // 5m candles: use last portion of 15m candles with finer granularity (simplified)
-    const candles5m  = generateCandles(regime, candles15m.at(-1)?.close ?? spot, 50);
+    const candles5m  = generateCandles(regime, candles15m.at(-1)?.close ?? spot, 80);
 
     const optionChain = generateOptionChain(spot, regime);
 

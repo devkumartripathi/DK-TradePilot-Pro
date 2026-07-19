@@ -204,7 +204,7 @@ function buildRationale(type: SignalType, ind: TechIndicators, spot: number, str
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-const CONFIDENCE_THRESHOLD = 90;
+const CONFIDENCE_THRESHOLD = 55;
 
 export async function generateSignals(): Promise<{
   signals: any[];
