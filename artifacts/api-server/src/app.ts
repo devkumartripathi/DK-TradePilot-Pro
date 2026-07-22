@@ -2,9 +2,13 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import pino from "pino";
-import router from "./routes";
 
-const pinoLogger = pino({ level: process.env.LOG_LEVEL ?? "info" });
+import router from "./routes";
+import symbolMasterRouter from "./routes/symbolMaster";
+
+const pinoLogger = pino({
+  level: process.env.LOG_LEVEL ?? "info",
+});
 
 const app: Express = express();
 
@@ -27,10 +31,12 @@ app.use(
     },
   }),
 );
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use("/api", symbolMasterRouter);
 app.use("/api", router);
 
 export default app;

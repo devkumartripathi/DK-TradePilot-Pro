@@ -1,5 +1,8 @@
+import "dotenv/config";
 import app from "./app";
 import { logger } from "./lib/logger";
+import symbolMasterRouter from "./routes/symbolMaster";
+app.use("/api", symbolMasterRouter);
 
 const rawPort = process.env["PORT"] ?? "3000";
 

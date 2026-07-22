@@ -27,10 +27,12 @@ async function buildAll() {
     // Examples of unbundleable packages:
     // - uses native modules and loads them dynamically (e.g. sharp)
     // - use path traversal to read files (e.g. @google-cloud/secret-manager loads sibling .proto files)
-    external: [
-      "*.node",
-      "sharp",
-      "better-sqlite3",
+external: [
+  "*.node",
+  "fyers-api-v3",
+  "sharp",
+  "better-sqlite3",
+  ...
       "sqlite3",
       "canvas",
       "bcrypt",
