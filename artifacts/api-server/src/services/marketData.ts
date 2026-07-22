@@ -10,7 +10,7 @@ export async function getHistoryData(
   rangeTo: string
 ) {
   fyers.setAccessToken(accessToken);
-
+console.log("History Symbol:", symbol);
   return await fyers.getHistory({
     symbol,
     resolution,

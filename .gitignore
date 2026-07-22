@@ -47,3 +47,18 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+.vercel
+.env*
+# Logs
+logs/
+*.log
+error.log
+
+# Local env
+.env.local
+
+# FYERS sample project
+artifacts/api-server/fyers-sample-v3/
+
+# Build cache
+.esbuild

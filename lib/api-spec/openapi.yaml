@@ -130,7 +130,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OptionsMetrics"
-
+  /fyers/analysis:
+    get:
+      operationId: getFyersAnalysis
+      tags: [market]
+      summary: Get FYERS technical analysis
+      responses:
+        "200":
+          description: FYERS analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FyersAnalysis"
   /signals/trade:
     get:
       operationId: getTradeSignals
@@ -599,6 +610,37 @@ components:
           type: array
           items:
             type: string
+    FyersAnalysis:
+      type: object
+      required:
+        - symbol
+        - price
+        - trend
+        - ema8
+        - ema20
+        - ema50
+        - ema100
+        - atr14
+        - rsi14
+      properties:
+        symbol:
+          type: string
+        price:
+          type: number
+        trend:
+          type: string
+        ema8:
+          type: number
+        ema20:
+          type: number
+        ema50:
+          type: number
+        ema100:
+          type: number
+        atr14:
+          type: number
+        rsi14:
+          type: number
 
     TradeSignals:
       type: object

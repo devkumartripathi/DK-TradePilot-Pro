@@ -8,7 +8,10 @@
  *   lib/ict/                      — ICT structural analysis
  *   lib/scoring/engine.ts         — confidence scoring
  */
-
+import { fyers } from "./fyersClient";
+import { getAccessToken } from "./tokenStore";
+import { getFyersQuote } from "./fyersMarketData";
+import { getNiftyLTP } from "./ltpService";
 // ── Price state ───────────────────────────────────────────────────────────────
 
 let baseNifty = 24580.35;
@@ -26,8 +29,9 @@ export function getNiftyLtp(): number {
 
 // ── Nifty market data ─────────────────────────────────────────────────────────
 
-export function generateNiftyData() {
-  const ltp       = getNiftyLtp();
+export async function  generateNiftyData() {
+  const ltp = (await getNiftyLTP()) ?? getNiftyLtp();
+  console.log("generateNiftyData LTP =", ltp);
   const open      = r2(ltp - (Math.random() - 0.45) * 120);
   const dayHigh   = r2(Math.max(ltp, open) + Math.random() * 60);
   const dayLow    = r2(Math.min(ltp, open) - Math.random() * 60);

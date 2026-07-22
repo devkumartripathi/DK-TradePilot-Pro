@@ -14,7 +14,7 @@ import {
 const router: IRouter = Router();
 
 router.get("/market/nifty", async (_req, res): Promise<void> => {
-  const data = generateNiftyData();
+  const data = await generateNiftyData();
   res.json(GetNiftyDataResponse.parse(data));
 });
 

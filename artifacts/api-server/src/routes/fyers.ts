@@ -137,6 +137,8 @@ router.get("/fyers/quotes", async (_req, res) => {
     const quotes = await fyers.getQuotes([
       "NSE:NIFTY50-INDEX",
     ]);
+    
+console.log(JSON.stringify(quotes, null, 2));
 
     res.json(quotes);
   } catch (err: any) {

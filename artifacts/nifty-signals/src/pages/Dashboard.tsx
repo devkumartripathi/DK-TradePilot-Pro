@@ -5,13 +5,14 @@ import {
   useGetSmcAnalysis, getGetSmcAnalysisQueryKey,
   useGetTradeSignals, getGetTradeSignalsQueryKey,
   useGetVwap, getGetVwapQueryKey,
+  useGetFyersAnalysis, getGetFyersAnalysisQueryKey,
 } from "@workspace/api-client-react"
 import { NiftyTicker } from "@/components/NiftyTicker"
 import { Badge } from "@/components/ui/badge"
 import { cn, formatCurrency, formatLargeNumber } from "@/lib/utils"
 import {
   Activity, AlertTriangle, ArrowDown, ArrowUp, BarChart2,
-  Crosshair, Layers, Target, TrendingUp, Zap
+  Crosshair, Layers, Target, TrendingUp, Zap, Gauge 
 } from "lucide-react"
 
 function MetricCard({ label, value, sub, variant, icon: Icon }: {
@@ -85,9 +86,14 @@ export default function Dashboard() {
   const { data: smc } = useGetSmcAnalysis({ query: { refetchInterval: 15000, queryKey: getGetSmcAnalysisQueryKey() } })
   const { data: signals } = useGetTradeSignals({ query: { refetchInterval: 10000, queryKey: getGetTradeSignalsQueryKey() } })
   const { data: vwap } = useGetVwap({ query: { refetchInterval: 5000, queryKey: getGetVwapQueryKey() } })
-
+const { data: fyers } = useGetFyersAnalysis({
+  query: {
+    refetchInterval: 5000,
+    queryKey: getGetFyersAnalysisQueryKey(),
+  },
+})
   const activeSignals = signals?.signals?.filter(s => s.status === "ACTIVE") ?? []
-
+console.log("FYERS Analysis:", fyers)
   return (
     <div className="flex flex-col gap-6">
       <NiftyTicker />
@@ -128,11 +134,55 @@ export default function Dashboard() {
         />
         <MetricCard
           label="VWAP"
+        
           value={vwap ? formatCurrency(vwap.vwap) : "—"}
           sub={vwap ? <span className={vwap.priceVsVwap === "ABOVE" ? "text-success" : vwap.priceVsVwap === "BELOW" ? "text-destructive" : ""}>{vwap.priceVsVwap} VWAP · {vwap.vwapTrend}</span> : undefined}
           icon={TrendingUp}
           variant={vwap && vwap.priceVsVwap === "ABOVE" ? "success" : vwap && vwap.priceVsVwap === "BELOW" ? "destructive" : undefined}
         />
+        <MetricCard
+  label="FYERS Price"
+  value={fyers ? formatCurrency(fyers.price) : "—"}
+  sub={fyers?.symbol}
+  icon={Gauge}
+/>
+
+<MetricCard
+  label="Trend"
+  value={fyers?.trend?.trend ?? "—"}
+  icon={TrendingUp}
+  variant={
+    fyers?.trend?.trend === "BULLISH"
+      ? "success"
+      : fyers?.trend?.trend === "BEARISH"
+      ? "destructive"
+      : undefined
+  }
+/>
+
+<MetricCard
+  label="RSI (14)"
+  value={fyers ? fyers.rsi14.toFixed(2) : "—"}
+  icon={Activity}
+  variant={
+    fyers && fyers.rsi14 >= 60
+      ? "success"
+      : fyers && fyers.rsi14 <= 40
+      ? "destructive"
+      : "warning"
+  }
+/>
+
+<MetricCard
+  label="ATR (14)"
+  value={fyers ? fyers.atr14.toFixed(2) : "—"}
+  sub={
+    fyers
+      ? `EMA8 ${fyers.ema8.toFixed(0)} • EMA20 ${fyers.ema20.toFixed(0)}`
+      : undefined
+  }
+  icon={BarChart2}
+/>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
