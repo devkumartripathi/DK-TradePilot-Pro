@@ -15,12 +15,21 @@
 
 import { getBroker }        from "./broker/index.js";
 import { buildIctContext }  from "./ict/context.js";
-import { calcRsi, calcEma, calcAtr, calcVwap, calcAdx, todayCandles } from "./ict/indicators.js";
 import { scoreAll }         from "./scoring/engine.js";
 import { getTelegramConfig, sendTelegramAlert } from "../routes/telegram.js";
 import type { TechIndicators } from "./scoring/types.js";
 import type { BrokerMarketData, OHLCV } from "./broker/types.js";
 import { logger } from "./logger.js";
+
+import {
+  calcRsi,
+  calcEma,
+  calcAtr,
+  calcVwap,
+  calcAdx,
+  todayCandles,
+  buildVwapData,
+} from "./ict/indicators.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -90,14 +99,19 @@ function formatTelegramMsg(s: any): string {
 // ── Indicator extraction ──────────────────────────────────────────────────────
 
 function extractIndicators(candles: OHLCV[], data: BrokerMarketData): TechIndicators {
-  const spot  = data.spot.ltp;
-  const chain = data.optionChain;
-  const rsi   = calcRsi(candles, 14);
-  const ema20 = calcEma(candles, 20);
-  const ema50 = calcEma(candles, 50);
-  const atr   = calcAtr(candles, 14);
-  const vwap  = calcVwap(todayCandles(candles));
-  const adx   = calcAdx(candles, 14);
+const spot  = data.spot.ltp;
+const chain = data.optionChain;
+const rsi   = calcRsi(candles, 14);
+const ema20 = calcEma(candles, 20);
+const ema50 = calcEma(candles, 50);
+const atr   = calcAtr(candles, 14);
+const vwap  = calcVwap(todayCandles(candles));
+const adx   = calcAdx(candles, 14);
+
+// 
+console.log("Today's candles:", todayCandles(candles).length);
+console.log("Spot:", spot);
+console.log("VWAP:", vwap);
 
   const pcr     = chain.pcr;
   const vix     = data.indiaVix;
@@ -135,12 +149,19 @@ function extractIndicators(candles: OHLCV[], data: BrokerMarketData): TechIndica
 
 // ── Signal builder ────────────────────────────────────────────────────────────
 
-function r2(n: number) { return Math.round(n * 100) / 100; }
+function r2(n: number) { return Math.round(n * 100) / 100; } 
 
-function buildSignal(type: SignalType, confidence: number, factors: any[], ind: TechIndicators, data: BrokerMarketData, smcBias: string) {
+function buildSignal(type: SignalType, confidence: number, factors: any[], ind: TechIndicators, data: BrokerMarketData, smcBias: string) {      
+
   const spot   = data.spot.ltp;
-  const meta   = SIGNAL_META[type];
+  const meta   = SIGNAL_META[type]; 
   const isBuy  = meta.direction === "BUY";
+console.log("========== buildSignal ==========");
+console.log("Spot:", data.spot);
+console.log("LTP:", data.spot.ltp);
+console.log("Meta:", meta);
+console.log("OptionChain:", data.optionChain);
+console.log("=================================");
   const atm    = Math.round(spot / 50) * 50;
   const strike = atm + meta.strikeOffset;
   const expiry = data.optionChain.expiry;

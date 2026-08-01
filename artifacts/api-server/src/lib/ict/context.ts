@@ -59,10 +59,28 @@ export function buildIctContext(
   const rBearFVG = recentFVG(fvgs, "BEARISH");
 
   const nBullBreaker = breakers.filter(b => b.type === "BULLISH")
-    .sort((a, b) => Math.abs(parseFloat(a.top) - currentPrice) - Math.abs(parseFloat(b.top) - currentPrice))[0] ?? null;
+    .sort((a, b) => Math.abs((a.top) - currentPrice) - Math.abs((b.top) - currentPrice))[0] ?? null;
   const nBearBreaker = breakers.filter(b => b.type === "BEARISH")
-    .sort((a, b) => Math.abs(parseFloat(a.top) - currentPrice) - Math.abs(parseFloat(b.top) - currentPrice))[0] ?? null;
+    .sort((a, b) => Math.abs((a.top) - currentPrice) - Math.abs((b.top) - currentPrice))[0] ?? null;
+let marketPhase:
+  | "ACCUMULATION"
+  | "MARKUP"
+  | "DISTRIBUTION"
+  | "MARKDOWN";
 
+if (finalTrend === "UPTREND" && bias === "BULLISH") {
+  marketPhase = "MARKUP";
+} else if (finalTrend === "DOWNTREND" && bias === "BEARISH") {
+  marketPhase = "MARKDOWN";
+} else if (sslSweep) {
+  marketPhase = "ACCUMULATION";
+} else if (bslSweep) {
+  marketPhase = "DISTRIBUTION";
+} else {
+  marketPhase = finalTrend === "UPTREND"
+    ? "MARKUP"
+    : "MARKDOWN";
+}
   return {
     candleCount: total,
     timeframe,
@@ -80,6 +98,7 @@ export function buildIctContext(
     liquidityLevels: liqLevels,
     liquiditySweeps: liqSweeps,
     currentBias: bias,
+    marketPhase,
     lastBos,
     lastChoch,
     lastMss,

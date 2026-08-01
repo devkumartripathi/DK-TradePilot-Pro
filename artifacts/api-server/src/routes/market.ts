@@ -11,6 +11,10 @@ import {
   generateVwap,
 } from "../lib/marketData";
 
+import { generateSignals } from "../lib/signalEngine";
+
+import { getLiveVwap } from "../lib/liveVwap";
+
 const router: IRouter = Router();
 
 router.get("/market/nifty", async (_req, res): Promise<void> => {
@@ -30,7 +34,7 @@ router.get("/market/candles", async (req, res): Promise<void> => {
 });
 
 router.get("/market/vwap", async (_req, res): Promise<void> => {
-  const data = generateVwap();
+  const data = await getLiveVwap();
   res.json(GetVwapResponse.parse(data));
 });
 

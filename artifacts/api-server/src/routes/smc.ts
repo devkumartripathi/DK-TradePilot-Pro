@@ -5,7 +5,7 @@ import { generateSmcAnalysis } from "../lib/marketData";
 const router: IRouter = Router();
 
 router.get("/smc/analysis", async (_req, res): Promise<void> => {
-  const analysis = generateSmcAnalysis();
+  const analysis = await generateSmcAnalysis();
   res.json(GetSmcAnalysisResponse.parse(analysis));
 });
 

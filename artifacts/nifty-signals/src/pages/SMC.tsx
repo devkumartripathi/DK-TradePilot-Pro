@@ -68,11 +68,11 @@ export default function SMC() {
             <div className="grid grid-cols-2 gap-2 text-xs font-mono">
               <div className="bg-muted/40 rounded p-2">
                 <div className="text-muted-foreground mb-0.5">Swing High</div>
-                <div className="text-success font-semibold">{ms.currentSwingHigh.toFixed(2)}</div>
+                <div className="text-success font-semibold">{ms.currentSwingHigh.toFixed(2)?? "--"}</div>
               </div>
               <div className="bg-muted/40 rounded p-2">
                 <div className="text-muted-foreground mb-0.5">Swing Low</div>
-                <div className="text-destructive font-semibold">{ms.currentSwingLow.toFixed(2)}</div>
+                <div className="text-destructive font-semibold">{ms.currentSwingLow.toFixed(2)?? "--"}</div>
               </div>
             </div>
           </div>

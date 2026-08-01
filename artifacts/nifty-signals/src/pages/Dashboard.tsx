@@ -92,7 +92,9 @@ const { data: fyers } = useGetFyersAnalysis({
     queryKey: getGetFyersAnalysisQueryKey(),
   },
 })
-  const activeSignals = signals?.signals?.filter(s => s.status === "ACTIVE") ?? []
+  const activeSignals = signals?.signals?.filter(s => s.status === "ACTIVE") ?? [];
+  console.log("Active Signals:", activeSignals);
+
 console.log("FYERS Analysis:", fyers)
   return (
     <div className="flex flex-col gap-6">
@@ -149,12 +151,11 @@ console.log("FYERS Analysis:", fyers)
 
 <MetricCard
   label="Trend"
-  value={fyers?.trend?.trend ?? "—"}
+  value={(fyers as any)?.trend?.trend ?? "—"}
   icon={TrendingUp}
-  variant={
-    fyers?.trend?.trend === "BULLISH"
+  variant={(fyers as any )?.trend?.trend  === "BULLISH"
       ? "success"
-      : fyers?.trend?.trend === "BEARISH"
+      : (fyers as any)?.trend?. trend  === "BEARISH"
       ? "destructive"
       : undefined
   }
@@ -285,3 +286,4 @@ console.log("FYERS Analysis:", fyers)
     </div>
   )
 }
+  

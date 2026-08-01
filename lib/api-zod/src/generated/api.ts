@@ -85,8 +85,8 @@ export const GetSmcAnalysisResponse = zod.object({
   "higherLow": zod.boolean(),
   "lowerHigh": zod.boolean(),
   "lowerLow": zod.boolean(),
-  "currentSwingHigh": zod.number(),
-  "currentSwingLow": zod.number(),
+  "currentSwingHigh": zod.number().nullable(),
+  "currentSwingLow": zod.number().nullable(),
   "phase": zod.enum(['ACCUMULATION', 'DISTRIBUTION', 'MARKUP', 'MARKDOWN', 'CONSOLIDATION'])
 }),
   "bos": zod.array(zod.object({
@@ -94,14 +94,14 @@ export const GetSmcAnalysisResponse = zod.object({
   "level": zod.number(),
   "time": zod.string(),
   "direction": zod.enum(['BULLISH', 'BEARISH']),
-  "strength": zod.enum(['STRONG', 'WEAK'])
+   "strength": zod.enum(['STRONG', 'MODERATE', 'WEAK']),
 })),
   "choch": zod.array(zod.object({
   "type": zod.string(),
   "level": zod.number(),
   "time": zod.string(),
   "direction": zod.enum(['BULLISH', 'BEARISH']),
-  "strength": zod.enum(['STRONG', 'WEAK'])
+  "strength": zod.enum(['STRONG', 'MODERATE', 'WEAK'])
 })),
   "liquidity": zod.object({
   "buySideLiquidity": zod.array(zod.number()),

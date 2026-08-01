@@ -132,6 +132,11 @@ export interface ICTContext {
 
   // Derived current-state flags (used by scoring engine)
   currentBias: StructureDirection;
+  marketPhase:
+  | "ACCUMULATION"
+  | "MARKUP"
+  | "DISTRIBUTION"
+  | "MARKDOWN";
 
   // Most recent / nearest events (null if none)
   lastBos: BosEvent | null;

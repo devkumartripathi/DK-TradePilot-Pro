@@ -14,7 +14,7 @@ export interface BrokerAdapter {
   readonly name: string;
 
   /** "kite" | "simulator" — used in signal metadata */
-  readonly source: "kite" | "simulator";
+  readonly source: "kite" | "fyers" | "simulator";
 
   /**
    * Returns true if the adapter is properly configured and can fetch live data.

@@ -39,9 +39,13 @@ export function detectOrderBlocks(
       }
       if (obIdx < 0) continue;
 
-      const obCandle = candles[obIdx];
-      const magnitude = candles[bosIdx].close - obCandle.low;
-      const mitigated = candles.slice(obIdx + 1).some(c => c.low <= obCandle.high && c.high >= obCandle.low);
+   const obCandle = candles[obIdx];
+const magnitude = candles[bosIdx].close - obCandle.low;
+const obMid = (obCandle.high + obCandle.low) / 2;
+
+const mitigated = candles
+  .slice(obIdx + 1)
+  .some(c => c.close < obMid);
 
       obs.push({
         id: `BOB_${++idCounter}`,
@@ -66,10 +70,24 @@ export function detectOrderBlocks(
         if (candles[i].close > candles[i].open) { obIdx = i; break; }
       }
       if (obIdx < 0) continue;
+const obCandle = candles[obIdx];
+const magnitude = obCandle.high - candles[bosIdx].close;
+const obMid = (obCandle.high + obCandle.low) / 2;
 
-      const obCandle = candles[obIdx];
-      const magnitude = obCandle.high - candles[bosIdx].close;
-      const mitigated = candles.slice(obIdx + 1).some(c => c.high >= obCandle.low && c.low <= obCandle.high);
+const mitigated = candles
+  .slice(obIdx + 1)
+  .some(c => c.close > obMid);
+
+console.log(
+  "Creating Bearish OB",
+  {
+    obIdx,
+    time: obCandle.time,
+    mitigated,
+    high: obCandle.high,
+    low: obCandle.low
+  }
+);
 
       obs.push({
         id: `BOB_${++idCounter}`,

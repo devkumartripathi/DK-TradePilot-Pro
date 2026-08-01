@@ -8,6 +8,7 @@
 
 import type { BrokerAdapter } from "./adapter.js";
 import { KiteAdapter }       from "./kiteAdapter.js";
+import { FyersAdapter } from "./fyersAdapter.js"; 
 import { SimulatorAdapter }  from "./simulatorAdapter.js";
 import { logger }            from "../logger.js";
 
@@ -21,7 +22,21 @@ export async function getBroker(): Promise<BrokerAdapter> {
     logger.info("Broker: forced simulator mode via BROKER env var");
     _adapter = new SimulatorAdapter();
     return _adapter;
+  } 
+
+// Try FYERS if access token is available
+if (process.env.FYERS_APP_ID) {
+  const fyers = new FyersAdapter();
+  const available = await fyers.isAvailable().catch(() => false);
+
+  if (available) {
+    logger.info("Broker: FYERS — live data active");
+    _adapter = fyers;
+    return _adapter;
   }
+
+  logger.warn("Broker: FYERS API check failed");
+} 
 
   // Try Kite if credentials are present
   if (process.env.KITE_API_KEY && process.env.KITE_ACCESS_TOKEN) {

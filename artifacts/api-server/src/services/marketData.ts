@@ -2,7 +2,8 @@ import { fyers } from "../lib/fyersClient";
 import axios from "axios";
 import { getAccessToken } from "../lib/tokenStore";
 
-export async function getHistoryData(
+export async function getHistoryData( 
+
   accessToken: string,
   symbol: string,
   resolution: string,
@@ -11,14 +12,21 @@ export async function getHistoryData(
 ) {
   fyers.setAccessToken(accessToken);
 console.log("History Symbol:", symbol);
-  return await fyers.getHistory({
+
+  const history = await fyers.getHistory({ 
     symbol,
     resolution,
     date_format: "1",
     range_from: rangeFrom,
     range_to: rangeTo,
     cont_flag: "1",
-  });
+  }); 
+  console.log("========== RAW HISTORY ==========");
+console.dir(history, { depth: null });
+console.log("================================");
+
+  console.dir(history, { depth: null });
+  return history;
 }
 
 export async function getOptionChain(symbol: string) {
@@ -33,7 +41,7 @@ export async function getOptionChain(symbol: string) {
     {
       params: {
         symbol,
-        strikecount: 10,
+        strikecount: 100,
         greeks: 1,
       },
       headers: {
@@ -42,5 +50,9 @@ export async function getOptionChain(symbol: string) {
     }
   );
 
+console.log(JSON.stringify(response.data, null, 2));
+console.log(Object.keys(response));
+console.dir(response.data, { depth: null });
+console.log(Object.keys(response.data));
   return response.data;
 }

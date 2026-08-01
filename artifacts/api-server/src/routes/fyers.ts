@@ -76,16 +76,21 @@ router.get("/fyers/callback", async (req, res) => {
 
     setAccessToken(accessToken);
 
+    console.log("✅ Access Token Saved:", accessToken.slice(0, 15) + "...");
+
+
     fyers.setAccessToken(accessToken);
 
-    res.json({
+    return res.json({
       success: true,
       accessToken,
     });
-  } catch (err: any) {
+    
+  } 
+  catch (err: any) {
     console.error(err.response?.data || err);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: err.response?.data || err.message,
     });
   }
@@ -109,11 +114,11 @@ router.get("/fyers/profile", async (_req, res) => {
 
     const profile = await fyers.get_profile();
 
-    res.json(profile);
+   return res.json(profile);
   } catch (err: any) {
     console.error(err);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: err.message,
     });
   }
@@ -140,11 +145,11 @@ router.get("/fyers/quotes", async (_req, res) => {
     
 console.log(JSON.stringify(quotes, null, 2));
 
-    res.json(quotes);
+   return res.json(quotes);
   } catch (err: any) {
     console.error(err);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: err.message,
     });
   }
@@ -186,11 +191,11 @@ router.get("/fyers/history", async (req, res) => {
       to.toISOString().slice(0, 10)
     );
 
-    res.json(history);
+    return res.json(history);
   } catch (err: any) {
     console.error(err);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: err.message,
     });
   }
@@ -234,6 +239,12 @@ router.get("/fyers/analysis", async (_req, res) => {
     const indicators = buildIndicators(candles);
 
     const optionChain = await getOptionChain("NSE:NIFTY50-INDEX");
+    
+    console.log("========== FYERS OPTION CHAIN ==========");
+console.log(JSON.stringify(optionChain, null, 2));
+console.log("=======================================");
+
+    console.log(JSON.stringify(optionChain, null, 2));
 
     const optionAnalysis = analyzeOptionChain(optionChain);
 
@@ -248,7 +259,7 @@ router.get("/fyers/analysis", async (_req, res) => {
       indicators.rsi14[indicators.rsi14.length - 1]
     );
 
-    res.json({
+    return res.json({
       symbol: "NSE:NIFTY50-INDEX",
 
       price: candles[candles.length - 1].close,
@@ -270,7 +281,7 @@ router.get("/fyers/analysis", async (_req, res) => {
   } catch (err: any) {
     console.error(err);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: err.message,
     });
   }

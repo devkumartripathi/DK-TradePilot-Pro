@@ -77,6 +77,34 @@ export function calcVwap(candles: OHLCV[]): number {
   return Math.round((cumPV / cumVol) * 100) / 100;
 }
 
+export function buildVwapData(
+  candles: OHLCV[],
+  currentPrice: number
+) {
+  const vwap = calcVwap(candles); 
+
+console.log("Today's candles:", todayCandles(candles).length);
+console.log("VWAP:", vwap);
+  // 
+  const band = 30;
+
+  return {
+    vwap,
+    upperBand1: Math.round((vwap + band) * 100) / 100,
+    upperBand2: Math.round((vwap + band * 2) * 100) / 100,
+    lowerBand1: Math.round((vwap - band) * 100) / 100,
+    lowerBand2: Math.round((vwap - band * 2) * 100) / 100,
+    currentPrice,
+    priceVsVwap:
+      currentPrice > vwap + 10
+        ? "ABOVE"
+        : currentPrice < vwap - 10
+        ? "BELOW"
+        : "AT",
+    vwapTrend: "FLAT" as const,
+  };
+}
+
 // ── ADX (14) ─────────────────────────────────────────────────────────────────
 
 export function calcAdx(candles: OHLCV[], period = 14): number {
@@ -118,9 +146,16 @@ export function calcAdx(candles: OHLCV[], period = 14): number {
 }
 
 // ── Helper — filter today's candles for VWAP ────────────────────────────────
-
 export function todayCandles(candles: OHLCV[]): OHLCV[] {
-  const today = new Date().toISOString().slice(0, 10);
-  const todayCandles = candles.filter(c => c.time.slice(0, 10) === today);
-  return todayCandles.length > 0 ? todayCandles : candles; // fallback to all
+  const now = new Date();
+
+  // India Market Session
+  const sessionStart = new Date(now);
+
+  sessionStart.setHours(9, 15, 0, 0);
+
+  return candles.filter(c => {
+    const t = new Date(c.time);
+    return t >= sessionStart;
+  });
 }

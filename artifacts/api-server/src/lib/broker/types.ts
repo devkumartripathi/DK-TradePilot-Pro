@@ -75,5 +75,5 @@ export interface BrokerMarketData {
   optionChain: OptionChainData;
   indiaVix: number;
   timestamp: string;
-  source: "kite" | "simulator";
+  source: "kite" | "fyers"| "simulator";
 }

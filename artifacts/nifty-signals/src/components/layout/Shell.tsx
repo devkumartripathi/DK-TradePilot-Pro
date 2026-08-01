@@ -1,10 +1,33 @@
 import * as React from "react"
 import { Link, useLocation } from "wouter"
-import { Activity, BarChart2, CandlestickChart, Crosshair, LayoutDashboard } from "lucide-react"
+import { Activity, BarChart2, CandlestickChart, Crosshair, LayoutDashboard, RefreshCw, } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+const REFRESH_SECONDS = 15;
+
+const [lastUpdated, setLastUpdated] = React.useState(new Date());
+const [countdown, setCountdown] = React.useState(REFRESH_SECONDS);
+
+React.useEffect(() => {
+  const timer = setInterval(() => {
+    setCountdown((prev) => {
+      if (prev <= 1) {
+        setLastUpdated(new Date());
+        return REFRESH_SECONDS;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, []);
+
+const handleRefresh = () => {
+  window.location.reload();
+};
+
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -46,6 +69,25 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+          <div className="hidden xl:flex items-center gap-3 ml-4 text-xs font-mono">
+  <span className="text-green-500 font-semibold">🟢 LIVE</span>
+
+  <span className="text-muted-foreground">
+    Last: {lastUpdated.toLocaleTimeString()}
+  </span>
+
+  <span className="text-primary">
+    Next: {countdown}s
+  </span>
+
+  <button
+    onClick={handleRefresh}
+    className="flex items-center gap-1 px-2 py-1 rounded border border-border hover:bg-muted"
+  >
+    <RefreshCw className="w-3 h-3" />
+    Refresh
+  </button>
+</div>
         </div>
       </header>
 

@@ -12,6 +12,12 @@ import { fyers } from "./fyersClient";
 import { getAccessToken } from "./tokenStore";
 import { getFyersQuote } from "./fyersMarketData";
 import { getNiftyLTP } from "./ltpService";
+import { getOptionChain } from "../services/marketData";
+import { response } from "express";
+import { getHistoryData } from "../services/marketData";
+import { buildIctContext } from "./ict/context";
+import type { OHLCV } from "./broker/types.js";
+import { buildPresentation, RawKeyLevel } from "./key-levels";
 // ── Price state ───────────────────────────────────────────────────────────────
 
 let baseNifty = 24580.35;
@@ -31,12 +37,25 @@ export function getNiftyLtp(): number {
 
 export async function  generateNiftyData() {
   const ltp = (await getNiftyLTP()) ?? getNiftyLtp();
+  const quotes = await getFyersQuote();
+
+const nifty = quotes?.d?.find(
+  (item: any) => item.n === "NSE:NIFTY50-INDEX"
+)?.v;
+
+if (!nifty) {
+  throw new Error("NIFTY50 quote not found");
+}
+
   console.log("generateNiftyData LTP =", ltp);
-  const open      = r2(ltp - (Math.random() - 0.45) * 120);
-  const dayHigh   = r2(Math.max(ltp, open) + Math.random() * 60);
-  const dayLow    = r2(Math.min(ltp, open) - Math.random() * 60);
-  const prevClose = r2(ltp - (Math.random() - 0.45) * 80);
-  const change    = r2(ltp - prevClose);
+  const open = nifty.open_price;
+const dayHigh = nifty.high_price;
+const dayLow = nifty.low_price;
+const prevClose = nifty.prev_close_price;
+
+const change = r2(ltp - prevClose);
+const changePercent = r2((change / prevClose) * 100);
+
   const now = new Date();
   const h   = now.getHours();
   const marketStatus = h >= 9 && h < 16 ? "OPEN"
@@ -45,7 +64,7 @@ export async function  generateNiftyData() {
 
   return {
     ltp, open, high: dayHigh, low: dayLow, close: r2(ltp - (Math.random() - 0.5) * 5),
-    change, changePercent: r2((change / prevClose) * 100),
+    change, changePercent,
     volume: r0(125e6 + Math.random() * 50e6),
     dayHigh, dayLow, weekHigh52: 24968.70, weekLow52: 19426.35,
     marketStatus, timestamp: new Date().toISOString(),
@@ -104,50 +123,249 @@ export function generateVwap() {
     vwapTrend: Math.random() > 0.5 ? "RISING" : "FALLING",
   };
 }
-
+ 
 // ── SMC Analysis ──────────────────────────────────────────────────────────────
 
-export function generateSmcAnalysis() {
+export async function generateSmcAnalysis() {
+  const accessToken = getAccessToken();
+let candles: OHLCV[] = [];
+
+if (accessToken) {
+  try {
+    const today = new Date();
+    const from = new Date(today);
+    from.setDate(today.getDate() - 5);
+
+    const history = await getHistoryData(
+      accessToken,
+      "NSE:NIFTY50-INDEX",
+      "15",
+      from.toISOString().slice(0, 10),
+      today.toISOString().slice(0, 10)
+    );
+
+    console.log("✅ SMC History OK");
+    console.log("Candles:", history?.candles?.length ?? 0);
+    candles =
+  history?.candles?.map(
+    ([timestamp, open, high, low, close, volume]: number[]) => ({
+      time: new Date(timestamp * 1000).toISOString(),
+      open,
+      high,
+      low,
+      close,
+      volume,
+    })
+  ) ?? [];
+
+console.log("OHLCV Candles:", candles.length);
+
+if (candles.length > 0) {
+  console.log("First Candle:", candles[0]);
+}
+  } catch (err) {
+    console.error("❌ SMC History Error:", err);
+  }
+} else {
+  console.log("⚠️ No FYERS Access Token");
+}
+console.log("SMC Final Candles:", candles.length);
   const ltp  = getNiftyLtp();
+  
+
+  console.log("========== LAST CANDLE ==========");
+console.log(candles[candles.length - 1]);
+
+console.log("========== CURRENT TIME ==========");
+console.log(new Date().toISOString());
+
+  const ictContext = buildIctContext(
+  candles,
+  ltp,
+  "15m"
+);
+
+  console.log("ICT Summary:", {
+  bias: ictContext.currentBias,
+  trend: ictContext.trendDirection,
+  swings: ictContext.swings.length,
+  bos: ictContext.bos.length,
+  choch: ictContext.choch.length,
+  orderBlocks: ictContext.orderBlocks.length,
+  fvgs: ictContext.fvgs.length,
+});
+console.log("BOS Events:", ictContext.bos);
+console.log("First BOS:", ictContext.bos[0]);
+
+console.log("CHOCH Events:", ictContext.choch);
+console.log("First CHOCH:", ictContext.choch[0]);
+
+console.log ("Latest Swings:", ictContext.swings.slice(-6));
+
+console.log("Order Blocks:", ictContext.orderBlocks);
+
+console.log("OB Count:", ictContext.orderBlocks.length);
+console.log("First OB:", ictContext.orderBlocks[0]);
+console.log("Nearest Bullish OB:", ictContext.nearestBullishOB);
+console.log("Nearest Bearish OB:", ictContext.nearestBearishOB);
+
+
+console.log("FVGs:", ictContext.fvgs);
+
+console.log("ICT Keys:", Object.keys(ictContext));
+console.log("Liquidity Levels:", ictContext.liquidityLevels);
+console.log("Liquidity Sweeps:", ictContext.liquiditySweeps);
+
+
   const bull = Math.random() > 0.4;
+  const latestHigh =
+  [...ictContext.swings]
+    .reverse()
+    .find(s => s.type === "HIGH");
+
+const latestLow =
+  [...ictContext.swings]
+    .reverse()
+    .find(s => s.type === "LOW");
+
   const swingHigh = r2(ltp + 80 + Math.random() * 120);
   const swingLow  = r2(ltp - 80 - Math.random() * 120);
   const phases = ["ACCUMULATION","DISTRIBUTION","MARKUP","MARKDOWN","CONSOLIDATION"] as const;
+
+  console.log("Nearest Bullish OB:", ictContext.nearestBullishOB);
+console.log("Nearest Bearish OB:", ictContext.nearestBearishOB);
+
   return {
-    marketStructure: {
-      trend: bull ? "UPTREND" as const : Math.random() > 0.5 ? "DOWNTREND" as const : "SIDEWAYS" as const,
-      higherHigh: bull, higherLow: bull, lowerHigh: !bull, lowerLow: !bull,
-      currentSwingHigh: swingHigh, currentSwingLow: swingLow,
-      phase: phases[Math.floor(Math.random() * phases.length)],
+   marketStructure: {
+  trend: ictContext.trendDirection,
+
+  higherHigh: ictContext.trendDirection === "UPTREND",
+  higherLow: ictContext.trendDirection === "UPTREND",
+
+  lowerHigh: ictContext.trendDirection === "DOWNTREND",
+  lowerLow: ictContext.trendDirection === "DOWNTREND",
+
+  currentSwingHigh: latestHigh?.price ?? null,
+  currentSwingLow: latestLow?.price ?? null,
+  phase: ictContext.marketPhase,
     },
-    bos: [
-      { type: "BOS", level: r2(ltp - 50 - Math.random() * 50), time: new Date(Date.now() - 45*60e3).toISOString(), direction: "BULLISH" as const, strength: "STRONG" as const },
-      { type: "BOS", level: r2(ltp + 30 + Math.random() * 40), time: new Date(Date.now() - 20*60e3).toISOString(), direction: bull ? "BULLISH" as const : "BEARISH" as const, strength: Math.random() > 0.5 ? "STRONG" as const : "WEAK" as const },
-    ],
-    choch: [{ type: "CHOCH", level: r2(ltp + (bull ? -80 : 80) + Math.random() * 30), time: new Date(Date.now() - 90*60e3).toISOString(), direction: bull ? "BULLISH" as const : "BEARISH" as const, strength: "STRONG" as const }],
-    liquidity: {
-      buySideLiquidity: [r2(ltp + 100), r2(ltp + 180), swingHigh],
-      sellSideLiquidity: [r2(ltp - 90), r2(ltp - 170), swingLow],
-      equalHighs: [r2(swingHigh - 10), r2(swingHigh - 5)],
-      equalLows:  [r2(swingLow + 8),   r2(swingLow + 3)],
-      liquiditySweeps: [{ level: r2(ltp - 110), time: new Date(Date.now() - 40*60e3).toISOString(), type: "SSL_SWEEP" as const, swept: true }],
-    },
-    orderBlocks: [
-      { id: "ob1", top: r2(ltp - 120 + Math.random() * 20), bottom: r2(ltp - 145 + Math.random() * 20), type: "BULLISH" as const, strength: "STRONG" as const, timeframe: "15m", mitigated: false, time: new Date(Date.now() - 120*60e3).toISOString() },
-      { id: "ob2", top: r2(ltp + 150 + Math.random() * 30), bottom: r2(ltp + 130 + Math.random() * 30), type: "BEARISH" as const, strength: "MODERATE" as const, timeframe: "1h", mitigated: false, time: new Date(Date.now() - 240*60e3).toISOString() },
-    ],
-    fairValueGaps: [
-      { id: "fvg1", top: r2(ltp - 20), bottom: r2(ltp - 35), type: "BULLISH" as const, filled: false, fillPercent: r2(Math.random() * 30), time: new Date(Date.now() - 15*60e3).toISOString() },
-      { id: "fvg2", top: r2(ltp + 60), bottom: r2(ltp + 45), type: "BEARISH" as const, filled: true, fillPercent: 100, time: new Date(Date.now() - 60*60e3).toISOString() },
-    ],
-    bias: bull ? "BULLISH" as const : Math.random() > 0.5 ? "BEARISH" as const : "NEUTRAL" as const,
-    keyLevels: [
-      { level: r2(ltp + 150), type: "RESISTANCE" as const, strength: "STRONG" as const, label: "Weekly High" },
-      { level: r2(ltp + 75),  type: "RESISTANCE" as const, strength: "MODERATE" as const, label: "Daily Resistance" },
-      { level: r2(ltp - 85),  type: "SUPPORT" as const, strength: "STRONG" as const, label: "Daily Support" },
-      { level: r2(ltp - 200), type: "SUPPORT" as const, strength: "STRONG" as const, label: "Weekly Low" },
-      { level: r2(ltp + 20),  type: "PIVOT" as const, strength: "MODERATE" as const, label: "CPR" },
-    ],
+   choch: ictContext.choch.map(c => ({
+  type: c.kind,
+  level: c.level,
+  time: c.time,
+  direction: c.direction,
+  strength: c.strength,
+})),
+    bos: ictContext.bos.map(b => ({
+  type: b.kind,
+  level: b.level,
+  time: b.time,
+  direction: b.direction,
+  strength: b.strength,
+})),
+
+  liquidity: {
+  buySideLiquidity: ictContext.liquidityLevels
+    .filter(l => l.type === "BSL")
+    .map(l => l.level),
+
+  sellSideLiquidity: ictContext.liquidityLevels
+    .filter(l => l.type === "SSL")
+    .map(l => l.level),
+
+  //
+  equalHighs: [],
+  equalLows: [],
+
+  liquiditySweeps: ictContext.liquiditySweeps.map(s => ({
+    level: s.level,
+    time: s.time,
+    type: s.type,
+    swept: s.confirmed,
+  })),
+},
+    orderBlocks: ictContext.orderBlocks.map(ob => ({
+  id: ob.id,
+  top: ob.top,
+  bottom: ob.bottom,
+  type: ob.type,
+  strength: ob.strength,
+  timeframe: ob.timeframe,
+  mitigated: ob.mitigated,
+  time: ob.time,
+})),
+
+fairValueGaps: ictContext.fvgs.map(fvg => ({
+  id: fvg.id,
+  top: fvg.top,
+  bottom: fvg.bottom,
+  type: fvg.type,
+  filled: fvg.filled,
+  fillPercent: fvg.fillPercent,
+  time: fvg.time,
+})),
+
+bias: ictContext.currentBias,
+
+keyLevels: [
+  ...(latestHigh
+    ? [{
+        level: latestHigh.price,
+        type: "RESISTANCE" as const,
+        strength: latestHigh.strength === "MAJOR"
+          ? "STRONG"
+          : "WEAK",
+        label: "Swing High",
+      }]
+    : []),
+
+  ...(latestLow
+    ? [{
+        level: latestLow.price,
+        type: "SUPPORT" as const,
+        strength: latestLow.strength === "MAJOR"
+          ? "STRONG"
+          : "WEAK",
+        label: "Swing Low",
+      }]
+    : []),
+
+  ...(ictContext.nearestBearishOB
+    ? [{
+        level: ictContext.nearestBearishOB.top,
+        type: "RESISTANCE" as const,
+        strength: ictContext.nearestBearishOB.strength,
+        label: "Bearish Order Block",
+      }]
+    : []),
+
+  ...(ictContext.nearestBullishOB
+    ? [{
+        level: ictContext.nearestBullishOB.bottom,
+        type: "SUPPORT" as const,
+        strength: ictContext.nearestBullishOB.strength,
+        label: "Bullish Order Block",
+      }]
+    : []),
+
+  ...(ictContext.recentBearishFVG
+    ? [{
+        level: ictContext.recentBearishFVG.top,
+        type: "RESISTANCE" as const,
+        strength: "MODERATE" as const,
+        label: "Bearish FVG",
+      }]
+    : []),
+
+  ...(ictContext.recentBullishFVG
+    ? [{
+        level: ictContext.recentBullishFVG.bottom,
+        type: "SUPPORT" as const,
+        strength: "MODERATE" as const,
+        label: "Bullish FVG",
+      }]
+    : []),
+],
   };
 }
 
@@ -182,12 +400,78 @@ export function generateOptionChain(spotPrice: number) {
   }
   return { expiry: nextThursday(), spotPrice, strikes, totalCallOI, totalPutOI };
 }
+export async function generateLiveOptionChain() {
+  const response = await getOptionChain("NSE:NIFTY50-INDEX");
 
-export function generateOptionsMetrics(spotPrice: number) {
-  const pcr = r2(0.7 + Math.random() * 0.9);
+  const chain = response.data.optionsChain;
+
+  const spot = chain.find(
+    (x: any) => x.symbol === "NSE:NIFTY50-INDEX"
+  );
+
+  const strikeMap = new Map<number, any>();
+
+  for (const item of chain) {
+    if (item.option_type === "") continue;
+
+    const strike = item.strike_price;
+
+    if (!strikeMap.has(strike)) {
+      strikeMap.set(strike, {
+        strikePrice: strike,
+        call: null,
+        put: null,
+      });
+    }
+
+    const row = strikeMap.get(strike);
+
+    const option = {
+      symbol: item.symbol,
+      ltp: item.ltp,
+      bid: item.bid,
+      ask: item.ask,
+      oi: item.oi,
+      oiChange: item.oich,
+      volume: item.volume,
+      iv: item.greeks?.iv ?? 0,
+      delta: item.greeks?.delta ?? 0,
+      gamma: item.greeks?.gamma ?? 0,
+      theta: item.greeks?.theta ?? 0,
+      vega: item.greeks?.vega ?? 0,
+    };
+
+    if (item.option_type === "CE") {
+      row.call = option;
+    } else if (item.option_type === "PE") {
+      row.put = option;
+    }
+  }
+
+  const strikes = [...strikeMap.values()].sort(
+    (a, b) => a.strikePrice - b.strikePrice
+  );
+return {
+  expiry: "",
+  spotPrice: spot?.ltp ?? 0,
+  totalCallOI: response.data.callOi,
+  totalPutOI: response.data.putOi,
+  strikes,
+  indiavixData: response.data.indiavixData,
+};
+}
+
+
+export  async function generateOptionsMetrics(spotPrice: number, expiries: string[]) {
+const quotes = await getFyersQuote();
+const indiaVix =
+  quotes?.d?.find((item: any) => item.n === "NSE:INDIAVIX-INDEX")?.v?.lp ??
+  r2(12 + Math.random() * 8);
+  const pcr = 0; 
+  maxPain: 0; 
   const atm = Math.round(spotPrice / 50) * 50;
-  const indiaVix = r2(12 + Math.random() * 8);
-  const totalCallOI = r0(80e6 + Math.random() * 30e6);
+  const totalCallOI = 0;
+
   return {
     pcr, pcrSignal: (pcr > 1.2 ? "BULLISH" : pcr < 0.8 ? "BEARISH" : "NEUTRAL") as "BULLISH"|"BEARISH"|"NEUTRAL",
     maxPain: r2(atm - 50 + Math.round(Math.random() * 4) * 50),
@@ -198,11 +482,6 @@ export function generateOptionsMetrics(spotPrice: number) {
     putCallBuildupSignal: pcr > 1.1 ? "Put Writing (Bullish)" : pcr < 0.9 ? "Call Writing (Bearish)" : "Mixed OI Activity",
     supportLevel: r2(spotPrice - 100 - Math.random() * 100),
     resistanceLevel: r2(spotPrice + 100 + Math.random() * 100),
-    expiries: (function() {
-      const out: string[] = [];
-      const d = new Date();
-      while (out.length < 4) { d.setDate(d.getDate() + 1); if (d.getDay() === 4) out.push(d.toISOString().slice(0, 10)); }
-      return out;
-    })(),
+    expiries,
   };
 }
