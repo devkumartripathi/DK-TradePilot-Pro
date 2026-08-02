@@ -33,11 +33,8 @@ export interface TradeSignal {
   rationale: string;
   smcSetup: string;
   optionType: TradeSignalOptionType;
-  /** @nullable */
   strikePrice: number | null;
-  /** @nullable */
   optionLtp: number | null;
-  /** @nullable */
   expiry: string | null;
   status: TradeSignalStatus;
   timestamp: string;

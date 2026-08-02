@@ -11,7 +11,6 @@ import type { TradeSignalsMarketBias } from './tradeSignalsMarketBias';
 export interface TradeSignals {
   signals: TradeSignal[];
   noTradeZone: boolean;
-  /** @nullable */
   noTradeReason: string | null;
   marketBias: TradeSignalsMarketBias;
   sessionTime: string;

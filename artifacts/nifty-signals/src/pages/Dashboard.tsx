@@ -81,7 +81,16 @@ function SignalCard({ signal }: { signal: {
   )
 }
 
-export default function Dashboard() {
+export default function Dashboard() {  
+
+  const { data: nifty } = useGetNiftyData({  
+  query: {
+    refetchInterval: 5000,
+    queryKey: getGetNiftyDataQueryKey(),
+  },
+}) 
+console.log("NIFTY DATA:", nifty); 
+
   const { data: metrics } = useGetOptionsMetrics({ query: { refetchInterval: 10000, queryKey: getGetOptionsMetricsQueryKey() } })
   const { data: smc } = useGetSmcAnalysis({ query: { refetchInterval: 15000, queryKey: getGetSmcAnalysisQueryKey() } })
   const { data: signals } = useGetTradeSignals({ query: { refetchInterval: 10000, queryKey: getGetTradeSignalsQueryKey() } })
@@ -110,8 +119,27 @@ console.log("FYERS Analysis:", fyers)
         </div>
       )}
 
-      {/* Quick Metrics */}
+      {/* Quick Metrics */} 
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <MetricCard 
+
+  label="NIFTY 50"
+  value={fyers ? formatCurrency(fyers.price) : "—"}
+  sub={
+    nifty
+      ? `${nifty.change >= 0 ? "+" : ""}${nifty.change.toFixed(2)} (${nifty.changePercent.toFixed(2)}%)`
+      : undefined
+  }
+  icon={TrendingUp}
+  variant={
+    nifty && nifty.change > 0
+      ? "success"
+      : nifty && nifty.change < 0
+      ? "destructive"
+      : undefined
+  }
+/>
         <MetricCard
           label="India VIX"
           value={metrics?.indiaVix != null? metrics.indiaVix.toFixed(2) : "--"}

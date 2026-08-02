@@ -30,6 +30,12 @@ export const GetNiftyDataResponse = zod.object({
   "volume": zod.number(),
   "dayHigh": zod.number(),
   "dayLow": zod.number(),
+  "previousDayHigh": zod.number(),
+  "previousDayLow": zod.number(),
+  "weekHigh": zod.number(),
+  "weekLow": zod.number(),
+  "monthHigh": zod.number(),
+  "monthLow": zod.number(),
   "weekHigh52": zod.number(),
   "weekLow52": zod.number(),
   "marketStatus": zod.enum(['OPEN', 'CLOSED', 'PRE_OPEN', 'POST_CLOSE']),
@@ -85,8 +91,8 @@ export const GetSmcAnalysisResponse = zod.object({
   "higherLow": zod.boolean(),
   "lowerHigh": zod.boolean(),
   "lowerLow": zod.boolean(),
-  "currentSwingHigh": zod.number().nullable(),
-  "currentSwingLow": zod.number().nullable(),
+  "currentSwingHigh": zod.number(),
+  "currentSwingLow": zod.number(),
   "phase": zod.enum(['ACCUMULATION', 'DISTRIBUTION', 'MARKUP', 'MARKDOWN', 'CONSOLIDATION'])
 }),
   "bos": zod.array(zod.object({
@@ -94,7 +100,7 @@ export const GetSmcAnalysisResponse = zod.object({
   "level": zod.number(),
   "time": zod.string(),
   "direction": zod.enum(['BULLISH', 'BEARISH']),
-   "strength": zod.enum(['STRONG', 'MODERATE', 'WEAK']),
+  "strength": zod.enum(['STRONG', 'MODERATE', 'WEAK'])
 })),
   "choch": zod.array(zod.object({
   "type": zod.string(),

@@ -17,7 +17,10 @@ export interface InstrumentConfig {
 
   lastSync?: string;
 
-  source?: "AUTO" | "FYERS" | "CACHE" | "MANUAL";
+  source?: "AUTO" | "FYERS" | "CACHE" | "MANUAL"; 
+
+  spotSymbol: string;
+optionPrefix: string;
 }
 
 export const DEFAULT_INSTRUMENTS: InstrumentConfig[] = [
@@ -29,9 +32,6 @@ exchange: "NSE",
 spotSymbol: "NSE:NIFTY50-INDEX",
 optionPrefix: "NIFTY",
 
-    id: "NIFTY",
-    instrument: "NIFTY",
-    exchange: "NSE",
     lotSize: 65,
     strikeStep: 50,
     tickSize: 0.05,
@@ -46,9 +46,6 @@ exchange: "NSE",
 spotSymbol: "NSE:NIFTYBANK-INDEX",
 optionPrefix: "BANKNIFTY",
    
-    id: "BANKNIFTY",
-    instrument: "BANKNIFTY",
-    exchange: "NSE",
     lotSize: 25,
     strikeStep: 100,
     tickSize: 0.05,
@@ -63,9 +60,6 @@ exchange: "BSE",
 spotSymbol: "BSE:SENSEX-INDEX",
 optionPrefix: "SENSEX",
 
-    id: "SENSEX",
-    instrument: "SENSEX",
-    exchange: "BSE",
     lotSize: 20,
     strikeStep: 100,
     tickSize: 0.05,

@@ -11,5 +11,6 @@ export type StructureEventStrength = typeof StructureEventStrength[keyof typeof 
 
 export const StructureEventStrength = {
   STRONG: 'STRONG',
+  MODERATE: 'MODERATE',
   WEAK: 'WEAK',
 } as const;

@@ -19,6 +19,12 @@ export interface NiftyData {
   volume: number;
   dayHigh: number;
   dayLow: number;
+  previousDayHigh: number;
+  previousDayLow: number;
+  weekHigh: number;
+  weekLow: number;
+  monthHigh: number;
+  monthLow: number;
   weekHigh52: number;
   weekLow52: number;
   marketStatus: NiftyDataMarketStatus;

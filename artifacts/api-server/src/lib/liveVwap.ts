@@ -24,6 +24,10 @@ console.log("Broker Name   :", broker.name);
 console.log("Broker Source :", broker.source);
 
 const data = await broker.getMarketData();
+console.log("========== BROKER DATA ==========");
+console.dir(data, { depth: null });
+console.log("Spot:", data.spot);
+console.log("LTP:", data.spot?.ltp);
 
 console.log("Data Source   :", data.source);
 console.log("Spot LTP      :", data.spot.ltp);
@@ -42,6 +46,10 @@ if (today.length > 0) {
 }
 
 console.log("===============================\n");
+
+console.log("Spot Object:", data.spot);
+console.log("Spot LTP:", data.spot?.ltp);
+console.log("Candles:", today.length);
 
 return buildVwapData(today, data.spot.ltp);
 }

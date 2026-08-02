@@ -23,5 +23,5 @@ console.log("=====================================");
 
 console.log("FYERS Quote:", JSON.stringify(quotes, null, 2));
 
-return quotes;
+return quotes.d[0].v; 
 }

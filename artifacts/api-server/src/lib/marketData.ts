@@ -17,7 +17,9 @@ import { response } from "express";
 import { getHistoryData } from "../services/marketData";
 import { buildIctContext } from "./ict/context";
 import type { OHLCV } from "./broker/types.js";
-import { buildPresentation, RawKeyLevel } from "./key-levels";
+import { buildPresentation, RawKeyLevel } from "./key-levels"; 
+import { getFyersVix } from "./fyersVix"; 
+import { getMarketSnapshot } from "./marketSnapshot";
 // ── Price state ───────────────────────────────────────────────────────────────
 
 let baseNifty = 24580.35;
@@ -36,23 +38,30 @@ export function getNiftyLtp(): number {
 // ── Nifty market data ─────────────────────────────────────────────────────────
 
 export async function  generateNiftyData() {
-  const ltp = (await getNiftyLTP()) ?? getNiftyLtp();
-  const quotes = await getFyersQuote();
 
-const nifty = quotes?.d?.find(
-  (item: any) => item.n === "NSE:NIFTY50-INDEX"
-)?.v;
+  const nifty = await getFyersQuote();
+
+const snapshot = await getMarketSnapshot();
+
+console.log("Snapshot =", snapshot);
+console.log("NIFTY =", nifty);
 
 if (!nifty) {
   throw new Error("NIFTY50 quote not found");
 }
 
-  console.log("generateNiftyData LTP =", ltp);
-  const open = nifty.open_price;
-const dayHigh = nifty.high_price;
-const dayLow = nifty.low_price;
-const prevClose = nifty.prev_close_price;
+if (!nifty) {
+  throw new Error("NIFTY50 quote not found");
+}
+const ltp = snapshot.price;
+  console.log("generateNiftyData LTP =", ltp); 
+  console.log("getNiftyLTP() =", ltp);
+console.log("Snapshot LTP   =", snapshot.price);
 
+const open = snapshot.open;
+const dayHigh = snapshot.high;
+const dayLow = snapshot.low;
+const prevClose = snapshot.previousClose;
 const change = r2(ltp - prevClose);
 const changePercent = r2((change / prevClose) * 100);
 
@@ -61,15 +70,38 @@ const changePercent = r2((change / prevClose) * 100);
   const marketStatus = h >= 9 && h < 16 ? "OPEN"
     : h === 9 && now.getMinutes() < 15 ? "PRE_OPEN"
     : h >= 16 ? "POST_CLOSE" : "CLOSED";
+return {
+  ltp,
+  open,
+  high: dayHigh,
+  low: dayLow,
+  close: prevClose,
 
-  return {
-    ltp, open, high: dayHigh, low: dayLow, close: r2(ltp - (Math.random() - 0.5) * 5),
-    change, changePercent,
-    volume: r0(125e6 + Math.random() * 50e6),
-    dayHigh, dayLow, weekHigh52: 24968.70, weekLow52: 19426.35,
-    marketStatus, timestamp: new Date().toISOString(),
-    trend: change > 0 ? "BULLISH" : change < 0 ? "BEARISH" : "NEUTRAL",
-  };
+  change,
+  changePercent,
+
+  volume: nifty.volume ?? 0,
+
+  dayHigh,
+  dayLow,
+
+  previousDayHigh: snapshot.previousDayHigh,
+  previousDayLow: snapshot.previousDayLow,
+
+  weekHigh: snapshot.weekHigh,
+  weekLow: snapshot.weekLow,
+
+  monthHigh: snapshot.monthHigh,
+  monthLow: snapshot.monthLow,
+
+  weekHigh52: snapshot.week52High,
+  weekLow52: snapshot.week52Low,
+
+  marketStatus,
+  timestamp: new Date().toISOString(),
+
+  trend: change > 0 ? "BULLISH" : change < 0 ? "BEARISH" : "NEUTRAL",
+};
 }
 
 // ── Candles ───────────────────────────────────────────────────────────────────
@@ -464,13 +496,15 @@ return {
 
 export  async function generateOptionsMetrics(spotPrice: number, expiries: string[]) {
 const quotes = await getFyersQuote();
-const indiaVix =
-  quotes?.d?.find((item: any) => item.n === "NSE:INDIAVIX-INDEX")?.v?.lp ??
-  r2(12 + Math.random() * 8);
-  const pcr = 0; 
-  maxPain: 0; 
-  const atm = Math.round(spotPrice / 50) * 50;
-  const totalCallOI = 0;
+const vix = await getFyersVix();
+const indiaVix = vix?.lp ?? 12;
+
+const pcr = 1.00;
+const maxPain = Math.round(spotPrice / 50) * 50;
+const atm = maxPain;
+
+const totalCallOI = 0;
+const totalPutOI = 0; 
 
   return {
     pcr, pcrSignal: (pcr > 1.2 ? "BULLISH" : pcr < 0.8 ? "BEARISH" : "NEUTRAL") as "BULLISH"|"BEARISH"|"NEUTRAL",

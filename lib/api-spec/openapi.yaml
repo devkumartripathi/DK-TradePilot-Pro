@@ -164,7 +164,6 @@ components:
           type: string
       required:
         - status
-
     NiftyData:
       type: object
       required:
@@ -178,11 +177,18 @@ components:
         - volume
         - dayHigh
         - dayLow
+        - previousDayHigh
+        - previousDayLow
+        - weekHigh
+        - weekLow
+        - monthHigh
+        - monthLow
         - weekHigh52
         - weekLow52
         - marketStatus
         - timestamp
         - trend
+
       properties:
         ltp:
           type: number
@@ -190,7 +196,7 @@ components:
           type: number
         high:
           type: number
-        low:
+        low:        
           type: number
         close:
           type: number
@@ -198,47 +204,72 @@ components:
           type: number
         changePercent:
           type: number
+
         volume:
           type: number
+
         dayHigh:
           type: number
+
         dayLow:
           type: number
+
+        previousDayHigh:
+          type: number
+
+        previousDayLow:
+          type: number
+
+        weekHigh:
+          type: number
+
+        weekLow:
+          type: number
+
+        monthHigh:
+          type: number
+
+        monthLow:
+          type: number
+
         weekHigh52:
           type: number
+
         weekLow52:
           type: number
+
         marketStatus:
           type: string
           enum: ["OPEN", "CLOSED", "PRE_OPEN", "POST_CLOSE"]
+
         timestamp:
           type: string
+
         trend:
           type: string
           enum: ["BULLISH", "BEARISH", "NEUTRAL"]
-
     Candle:
-      type: object
-      required:
-        - time
-        - open
-        - high
-        - low
-        - close
-        - volume
-      properties:
-        time:
-          type: string
-        open:
-          type: number
-        high:
-          type: number
-        low:
-          type: number
-        close:
-          type: number
-        volume:
-          type: number
+        type: object
+        required:
+          - time
+          - open
+          - high
+          - low
+          - close
+          - volume
+        properties:
+          time:
+            type: string
+          open:
+            type: number
+          high:
+            type: number
+          low:
+            type: number
+          close:
+            type: number
+          volume:
+            type: number
 
     VwapData:
       type: object
@@ -362,7 +393,7 @@ components:
           enum: ["BULLISH", "BEARISH"]
         strength:
           type: string
-          enum: ["STRONG", "WEAK"]
+          enum: ["STRONG", "MODERATE", "WEAK"]
 
     LiquidityData:
       type: object
@@ -659,7 +690,8 @@ components:
         noTradeZone:
           type: boolean
         noTradeReason:
-          type: ["string", "null"]
+          type: string 
+          nullable: true
         marketBias:
           type: string
           enum: ["BULLISH", "BEARISH", "NEUTRAL"]
@@ -822,11 +854,14 @@ components:
           type: string
           enum: ["CE", "PE", "FUTURES", "SPOT"]
         strikePrice:
-          type: ["number", "null"]
+          type: number 
+          nullable: true
         optionLtp:
-          type: ["number", "null"]
+          type: number 
+          nullable: true
         expiry:
-          type: ["string", "null"]
+          type: string 
+          nullable: true
         status:
           type: string
           enum: ["ACTIVE", "HIT_TARGET1", "HIT_TARGET2", "HIT_TARGET3", "STOPPED_OUT", "EXPIRED"]

@@ -39,6 +39,12 @@ export interface NiftyData {
   volume: number;
   dayHigh: number;
   dayLow: number;
+  previousDayHigh: number;
+  previousDayLow: number;
+  weekHigh: number;
+  weekLow: number;
+  monthHigh: number;
+  monthLow: number;
   weekHigh52: number;
   weekLow52: number;
   marketStatus: NiftyDataMarketStatus;
@@ -137,6 +143,7 @@ export type StructureEventStrength = typeof StructureEventStrength[keyof typeof 
 
 export const StructureEventStrength = {
   STRONG: 'STRONG',
+  MODERATE: 'MODERATE',
   WEAK: 'WEAK',
 } as const;
 
@@ -503,11 +510,8 @@ export interface TradeSignal {
   rationale: string;
   smcSetup: string;
   optionType: TradeSignalOptionType;
-  /** @nullable */
   strikePrice: number | null;
-  /** @nullable */
   optionLtp: number | null;
-  /** @nullable */
   expiry: string | null;
   status: TradeSignalStatus;
   timestamp: string;
@@ -521,7 +525,6 @@ export interface TradeSignal {
 export interface TradeSignals {
   signals: TradeSignal[];
   noTradeZone: boolean;
-  /** @nullable */
   noTradeReason: string | null;
   marketBias: TradeSignalsMarketBias;
   sessionTime: string;

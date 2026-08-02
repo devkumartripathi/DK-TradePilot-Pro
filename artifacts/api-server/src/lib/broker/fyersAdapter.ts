@@ -35,18 +35,36 @@ async getMarketData(): Promise<BrokerMarketData> {
 if (!token) {
   throw new Error("FYERS access token not available");
 }
-const today = new Date().toISOString().split("T")[0];
+let history: any = { candles: [] };
 
-const history = await getHistoryData(
-  token,
-  "NSE:NIFTY50-INDEX",
-  "15",
-  today,
-  today
-);
+const searchDate = new Date();
 
-console.log("History Date:", today);
-console.log("Candles:", history.candles.length);
+for (let i = 0; i < 7; i++) {
+  const date = new Date(searchDate);
+  date.setDate(searchDate.getDate() - i);
+
+  const day = date.toISOString().split("T")[0];
+
+  history = await getHistoryData(
+    token,
+    "NSE:NIFTY50-INDEX",
+    "15",
+    day,
+    day
+  );
+
+  console.log("History Date:", day);
+  console.log("Candles:", history?.candles?.length ?? 0);
+
+  if (history?.candles?.length > 0) {
+    console.log("Using Trading Day:", day);
+    break;
+  }
+}
+
+if (!history?.candles?.length) {
+  throw new Error("No historical candles found in last 7 days.");
+}
 
 console.dir(history, { depth: null });
 
@@ -86,19 +104,19 @@ console.log("================================");
 
   return {
   spot: {
-    ltp: quote.ltp,
-    open: quote.open_price,
-    high: quote.high_price,
-    low: quote.low_price,
-    close: quote.prev_close_price,
-    volume: quote.vol_traded_today,
-    change: quote.ch,
-    changePercent: quote.chp,
-  },
+  ltp: quote.lp,
+  open: quote.open_price,
+  high: quote.high_price,
+  low: quote.low_price,
+  close: quote.prev_close_price,
+  volume: quote.volume,
+  change: quote.ch,
+  changePercent: quote.chp,
+},
 
   candles15m,
 
-  // अभी के लिए Temporary
+  // 
   candles5m: candles15m,
 
   optionChain: mappedOptionChain,
