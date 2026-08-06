@@ -493,6 +493,61 @@ export const TradeSignalDataQuality = {
   SIMULATED: 'SIMULATED',
 } as const;
 
+export type TradeSignalConfidenceBand = typeof TradeSignalConfidenceBand[keyof typeof TradeSignalConfidenceBand];
+
+
+export const TradeSignalConfidenceBand = {
+  VERY_STRONG: 'VERY_STRONG',
+  STRONG: 'STRONG',
+  MODERATE: 'MODERATE',
+  WEAK: 'WEAK',
+} as const;
+
+export type TradeSignalTradeQuality = typeof TradeSignalTradeQuality[keyof typeof TradeSignalTradeQuality];
+
+
+export const TradeSignalTradeQuality = {
+  'A+': 'A+',
+  A: 'A',
+  B: 'B',
+  C: 'C',
+  AVOID: 'AVOID',
+} as const;
+
+export interface OptionTrade {
+  entry: number;
+  stopLoss: number;
+  target1: number;
+  target2: number;
+  target3: number;
+}
+
+export interface EntryWindow {
+  from: string;
+  to: string;
+  lastSafeEntry: string;
+}
+
+export interface ExitPlan {
+  targetExit: string;
+  stopLossExit: string;
+  timeExit: string;
+}
+
+export interface AiStrike {
+  marketType?: string;
+  confidence?: number;
+  recommended?: string;
+  safe?: string;
+  aggressive?: string;
+  entryAllowed?: boolean;
+  thetaFavorable?: boolean;
+  liquidityRisk?: string;
+  reason?: string;
+  entryWindow?: EntryWindow;
+  exitPlan?: ExitPlan;
+}
+
 export interface TradeSignal {
   id: string;
   type: TradeSignalType;
@@ -520,6 +575,12 @@ export interface TradeSignal {
   telegramAlertSent: boolean;
   brokerSource?: TradeSignalBrokerSource;
   dataQuality?: TradeSignalDataQuality;
+  confidenceBand?: TradeSignalConfidenceBand;
+  tradeQuality?: TradeSignalTradeQuality;
+  qualityStars?: number;
+  qualityReason?: string;
+  optionTrade?: OptionTrade;
+  aiStrike?: AiStrike;
 }
 
 export interface TradeSignals {

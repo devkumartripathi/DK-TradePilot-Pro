@@ -285,7 +285,39 @@ export const GetTradeSignalsResponse = zod.object({
 })),
   "telegramAlertSent": zod.boolean(),
   "brokerSource": zod.enum(['kite', 'simulator']).optional(),
-  "dataQuality": zod.enum(['LIVE', 'SIMULATED']).optional()
+  "dataQuality": zod.enum(['LIVE', 'SIMULATED']).optional(),
+  "confidenceBand": zod.enum(['VERY_STRONG', 'STRONG', 'MODERATE', 'WEAK']).optional(),
+  "tradeQuality": zod.enum(['A+', 'A', 'B', 'C', 'AVOID']).optional(),
+  "qualityStars": zod.number().optional(),
+  "qualityReason": zod.string().optional(),
+  "optionTrade": zod.object({
+  "entry": zod.number(),
+  "stopLoss": zod.number(),
+  "target1": zod.number(),
+  "target2": zod.number(),
+  "target3": zod.number()
+}).optional(),
+  "aiStrike": zod.object({
+  "marketType": zod.string().optional(),
+  "confidence": zod.number().optional(),
+  "recommended": zod.string().optional(),
+  "safe": zod.string().optional(),
+  "aggressive": zod.string().optional(),
+  "entryAllowed": zod.boolean().optional(),
+  "thetaFavorable": zod.boolean().optional(),
+  "liquidityRisk": zod.string().optional(),
+  "reason": zod.string().optional(),
+  "entryWindow": zod.object({
+  "from": zod.string(),
+  "to": zod.string(),
+  "lastSafeEntry": zod.string()
+}).optional(),
+  "exitPlan": zod.object({
+  "targetExit": zod.string(),
+  "stopLossExit": zod.string(),
+  "timeExit": zod.string()
+}).optional()
+}).optional()
 })),
   "noTradeZone": zod.boolean(),
   "noTradeReason": zod.string().nullable(),

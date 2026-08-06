@@ -36,23 +36,79 @@ function MetricCard({ label, value, sub, variant, icon: Icon }: {
 }
 
 type SignalType = "CALL_BUY" | "CALL_SELL" | "PUT_BUY" | "PUT_SELL"
-const SIGNAL_BADGE: Record<string, { label: string; cls: string }> = {
+const SIGNAL_BADGE: Record<string, { label: string; cls: string }> = { 
   CALL_BUY:  { label: "CALL BUY",  cls: "bg-success/15 text-success border-success/30" },
   PUT_BUY:   { label: "PUT BUY",   cls: "bg-destructive/15 text-destructive border-destructive/30" },
   CALL_SELL: { label: "CALL SELL", cls: "bg-warning/15 text-warning border-warning/30" },
   PUT_SELL:  { label: "PUT SELL",  cls: "bg-primary/15 text-primary border-primary/30" },
 }
-
 function SignalCard({ signal }: { signal: {
-  id: string; direction: "BUY" | "SELL"; instrument: string; optionType: string;
+  id: string;
+  direction: "BUY" | "SELL";
+  instrument: string;
+  optionType: string;
   optionSignalType?: string;
-  strikePrice: number | null; optionLtp?: number | null;
-  entry: number; stopLoss: number; target1: number;
-  target2: number; target3: number; riskReward: number; confidenceScore: number;
-  confidenceLabel: string; smcSetup: string; status: string;
-} }) {
+  strikePrice: number | null;
+  optionLtp?: number | null;
+
+  optionTrade?: {
+  entry: number;
+  stopLoss: number;
+  target1: number;
+  target2: number;
+  target3: number;
+};
+
+  entry: number;
+  stopLoss: number;
+  target1: number;
+  target2: number;
+  target3: number;
+
+  riskReward: number;
+
+  confidenceScore: number;
+  confidenceLabel: string;
+
+  tradeQuality?: string;
+  qualityStars?: number;
+  qualityReason?: string;
+aiStrike?: {
+  marketType?: string;
+
+  entryAllowed?: boolean;
+
+  liquidityRisk?: string;
+
+  entryWindow?: {
+    from: string;
+    to: string;
+    lastSafeEntry: string;
+  };
+
+  exitPlan?: {
+    targetExit: string;
+    mandatoryExit: string;
+  };
+  };
+
+  smcSetup: string;
+  status: string;
+} })  {
   const sigType = (signal.optionSignalType ?? (signal.direction === "BUY" ? "CALL_BUY" : "PUT_BUY")) as SignalType
-  const badge = SIGNAL_BADGE[sigType] ?? SIGNAL_BADGE.CALL_BUY
+  const badge = SIGNAL_BADGE[sigType] ?? SIGNAL_BADGE.CALL_BUY; 
+  
+  const waiting = signal.status === "WAITING";
+
+  console.log("========== SIGNAL CARD ==========");
+console.log(signal);
+console.log("Strike:", signal.strikePrice);
+console.log("Option:", signal.optionType);
+console.log("LTP:", signal.optionLtp); 
+console.log("OPTION TRADE =", signal.optionTrade);
+console.log("===============================");
+
+
   return (
     <div className="rounded-lg border border-border bg-card p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -65,10 +121,11 @@ function SignalCard({ signal }: { signal: {
           {signal.confidenceScore.toFixed(0)}% {signal.confidenceLabel}
         </div>
       </div>
-      {signal.optionLtp != null && (
+      {!waiting && signal.optionLtp != null && (
         <div className="text-xs text-muted-foreground font-mono">Option LTP: <span className="text-foreground font-bold">₹{signal.optionLtp.toFixed(2)}</span></div>
       )}
-      <div className="grid grid-cols-3 gap-2 text-xs font-mono">
+       {!waiting && ( 
+        <div className="grid grid-cols-3 gap-2 text-xs font-mono">
         <div className="flex flex-col"><span className="text-muted-foreground">Entry</span><span className="font-semibold">{signal.entry.toFixed(2)}</span></div>
         <div className="flex flex-col"><span className="text-destructive/80">Stop Loss</span><span className="font-semibold text-destructive">{signal.stopLoss.toFixed(2)}</span></div>
         <div className="flex flex-col"><span className="text-muted-foreground">R:R</span><span className="font-semibold text-success">1:{signal.riskReward.toFixed(1)}</span></div>
@@ -76,10 +133,148 @@ function SignalCard({ signal }: { signal: {
         <div className="flex flex-col"><span className="text-success/80">T2</span><span className="font-semibold text-success">{signal.target2.toFixed(2)}</span></div>
         <div className="flex flex-col"><span className="text-success/80">T3</span><span className="font-semibold text-success">{signal.target3.toFixed(2)}</span></div>
       </div>
-      <div className="text-[10px] text-muted-foreground bg-muted/50 rounded px-2 py-1 font-mono">{signal.smcSetup}</div>
+       )} 
+
+       {!waiting && signal.optionTrade && (
+  <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+    <div className="text-xs font-bold mb-2">
+      OPTION PREMIUM
     </div>
+
+    <div className="grid grid-cols-3 gap-2 text-xs font-mono">
+
+      <div className="flex flex-col">
+        <span className="text-muted-foreground">Entry</span>
+        <span className="font-semibold">
+          ₹{signal.optionTrade.entry.toFixed(2)}
+        </span>
+      </div>
+
+      <div className="flex flex-col">
+        <span className="text-destructive/80">Stop Loss</span>
+        <span className="font-semibold text-destructive">
+          ₹{signal.optionTrade.stopLoss.toFixed(2)}
+        </span>
+      </div>
+
+      <div className="flex flex-col">
+        <span className="text-success/80">Target 1</span>
+        <span className="font-semibold text-success">
+          ₹{signal.optionTrade.target1.toFixed(2)}
+        </span>
+      </div>
+
+      <div className="flex flex-col">
+        <span className="text-success/80">Target 2</span>
+        <span className="font-semibold text-success">
+          ₹{signal.optionTrade.target2.toFixed(2)}
+        </span>
+      </div>
+
+      <div className="flex flex-col">
+        <span className="text-success/80">Target 3</span>
+        <span className="font-semibold text-success">
+          ₹{signal.optionTrade.target3.toFixed(2)}
+        </span>
+      </div>
+
+    </div>
+  </div>
+)}
+
+      <div className="text-[10px] text-muted-foreground bg-muted/50 rounded px-2 py-1 font-mono">{signal.smcSetup}</div> 
+{signal.tradeQuality && (
+  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs space-y-1">
+
+    <div className="flex justify-between">
+
+      <span className="font-semibold">
+        AI QUALITY
+      </span>
+
+      <span className="font-bold">
+        {"★".repeat(signal.qualityStars ?? 1)}
+      </span>
+
+    </div>
+
+    <div className="font-bold text-sm">
+      Grade : {signal.tradeQuality}
+    </div>
+
+    <div className="text-muted-foreground">
+      {signal.qualityReason}
+    </div>
+
+    {signal.aiStrike && (
+
+      <div className="pt-2 border-t border-border space-y-1">
+
+        <div>
+          Market :
+          {" "}
+          <b>{signal.aiStrike.marketType}</b>
+        </div>
+
+        <div>
+          Entry :
+          {" "}
+          <b>
+            {signal.aiStrike.entryAllowed ? "YES" : "NO"}
+          </b>
+        </div>
+
+        <div>
+          Liquidity :
+          {" "}
+          <b>{signal.aiStrike.liquidityRisk}</b>
+        </div>
+<div>
+  Entry Window :
+  {" "}
+  <b>
+    {signal.aiStrike.entryWindow
+      ? `${signal.aiStrike.entryWindow.from} → ${signal.aiStrike.entryWindow.to}`
+      : "--"}
+  </b>
+</div>
+
+<div>
+  Last Safe Entry :
+  {" "}
+  <b>
+    {signal.aiStrike.entryWindow?.lastSafeEntry ?? "--"}
+  </b>
+</div>
+
+<div>
+  Target Exit :
+  {" "}
+  <b>
+    {signal.aiStrike.exitPlan?.targetExit ?? "--"}
+  </b>
+</div>
+
+<div>
+  Mandatory Exit :
+  {" "}
+  <b>
+    {signal.aiStrike.exitPlan?.mandatoryExit ?? "--"}
+  </b>
+</div>
+      </div>
+
+    )}
+
+  </div>
+)}
+
+
+    </div> 
+
   )
 }
+
 
 export default function Dashboard() {  
 
@@ -92,7 +287,8 @@ export default function Dashboard() {
 console.log("NIFTY DATA:", nifty); 
 
   const { data: metrics } = useGetOptionsMetrics({ query: { refetchInterval: 10000, queryKey: getGetOptionsMetricsQueryKey() } })
-  const { data: smc } = useGetSmcAnalysis({ query: { refetchInterval: 15000, queryKey: getGetSmcAnalysisQueryKey() } })
+  const { data: smc } = useGetSmcAnalysis({ query: { refetchInterval: 15000, queryKey: getGetSmcAnalysisQueryKey() } }) 
+  console.log("SMC DATA =", smc);
   const { data: signals } = useGetTradeSignals({ query: { refetchInterval: 10000, queryKey: getGetTradeSignalsQueryKey() } })
   const { data: vwap } = useGetVwap({ query: { refetchInterval: 5000, queryKey: getGetVwapQueryKey() } })
 const { data: fyers } = useGetFyersAnalysis({
@@ -103,8 +299,12 @@ const { data: fyers } = useGetFyersAnalysis({
 })
   const activeSignals = signals?.signals?.filter(s => s.status === "ACTIVE") ?? [];
   console.log("Active Signals:", activeSignals);
+console.log("All Signals:", signals);
+console.log("Option Signal Type:", activeSignals[0]?.optionSignalType);
+console.log("First Active Signal:", activeSignals[0]); 
 
-console.log("FYERS Analysis:", fyers)
+console.log("FYERS Analysis:", fyers) 
+
   return (
     <div className="flex flex-col gap-6">
       <NiftyTicker />
@@ -245,20 +445,47 @@ console.log("FYERS Analysis:", fyers)
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs font-mono mb-3">
                   <div><span className="text-muted-foreground">Phase: </span><span className="text-foreground">{smc?.marketStructure?.phase ?? "NA"}</span></div>
-                  <div><span className="text-muted-foreground">Swing H: </span><span className="text-success">{(smc?.marketStructure?.currentSwingHigh ?? 0).toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Sructure High: </span><span className="text-success">{(smc?.marketStructure?.currentSwingHigh ?? 0).toFixed(2)}</span></div>
                   <div className="flex gap-2">
                     {smc?.marketStructure?.higherHigh && <span className="text-success">HH</span>}
                     {smc?.marketStructure?.higherLow && <span className="text-success">HL</span>}
                     {smc?.marketStructure?.lowerHigh && <span className="text-destructive">LH</span>}
                     {smc?.marketStructure?.lowerLow && <span className="text-destructive">LL</span>}
                   </div>
-                  <div><span className="text-muted-foreground">Swing L: </span><span className="text-destructive">{(smc?.marketStructure?.currentSwingLow ?? 0).toFixed(2)}</span></div>
+                  <div><span className="text-muted-foreground">Structure Low: </span><span className="text-destructive">{(smc?.marketStructure?.currentSwingLow ?? 0).toFixed(2)}</span></div>
                 </div>
               </div>
 
-              {/* Order Blocks */}
-              <div className="rounded-lg border border-border bg-card p-4">
+              {/* Order Blocks */} 
+
+              {/* Current Session */}
+<div className="rounded-lg border border-border bg-card p-4">
+  <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">
+    Current Session
+  </div>
+
+  <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+    <div>
+      <span className="text-muted-foreground">Today's High: </span>
+      <span className="text-success">
+        {(nifty?.dayHigh ?? 0).toFixed(2)}
+      </span>
+    </div>
+
+    <div>
+      <span className="text-muted-foreground">Today's Low: </span>
+      <span className="text-destructive">
+        {(nifty?.dayLow ?? 0).toFixed(2)}
+      </span>
+    </div>
+  </div>
+</div>
+
+              <div className="rounded-lg border border-border bg-card p-4"> 
                 <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Active Order Blocks</div>
+                <div className="text-[11px] text-yellow-500 mb-2">
+  Total: {smc?.orderBlocks?.length ?? 0} | Active: {(smc?.orderBlocks ?? []).filter(ob => !ob.mitigated).length}
+</div>
                 <div className="flex flex-col gap-2">
                   {(smc?.orderBlocks ?? []).filter(ob => !ob.mitigated).slice(0, 3).map(ob => (
                     <div key={ob.id} className="flex items-center justify-between text-xs font-mono">
@@ -274,7 +501,18 @@ console.log("FYERS Analysis:", fyers)
               {/* Key Levels */}
               <div className="rounded-lg border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">Key Levels</div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5"> 
+                  <div className="flex items-center justify-between text-xs font-mono">
+  <span className="font-semibold text-success">TODAY HIGH</span>
+  <span>{(nifty?.dayHigh ?? 0).toFixed(2)}</span>
+  <span className="text-muted-foreground">Current Session</span>
+</div>
+
+<div className="flex items-center justify-between text-xs font-mono">
+  <span className="font-semibold text-destructive">TODAY LOW</span>
+  <span>{(nifty?.dayLow ?? 0).toFixed(2)}</span>
+  <span className="text-muted-foreground">Current Session</span>
+</div>
                   {(smc?.keyLevels ?? []).slice(0, 4).map((kl, i) => (
                     <div key={i} className="flex items-center justify-between text-xs font-mono">
                       <span className={cn("font-semibold", kl.type === "SUPPORT" ? "text-success" : kl.type === "RESISTANCE" ? "text-destructive" : "text-primary")}>{kl.type}</span>
@@ -299,14 +537,46 @@ console.log("FYERS Analysis:", fyers)
           {!signals ? (
             <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-32 animate-pulse bg-muted rounded-lg border border-border" />)}</div>
           ) : activeSignals.length === 0 ? (
-            <div className="rounded-lg border border-border bg-card p-8 text-center">
-              <Zap className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <div className="text-sm text-muted-foreground">No active signals</div>
-              <div className="text-xs text-muted-foreground mt-1">{signals.noTradeReason ?? "Waiting for high-probability setup..."}</div>
-            </div>
+  <SignalCard
+    signal={{
+      id: "waiting",
+      direction: "BUY",
+      instrument: "NIFTY 50",
+      optionType: "--",
+      optionSignalType: "CALL_BUY",
+
+      strikePrice: null,
+      optionLtp: null,
+
+      entry: 0,
+      stopLoss: 0,
+      target1: 0,
+      target2: 0,
+      target3: 0,
+
+      riskReward: 0,
+
+      confidenceScore: 0,
+      confidenceLabel: "SCANNING",
+
+      smcSetup:
+        signals.noTradeReason ??
+        "AI is scanning for the next high-probability setup.",
+
+      status: "WAITING",
+    }}
+  />
           ) : (
             <div className="flex flex-col gap-3">
-              {activeSignals.map(sig => <SignalCard key={sig.id} signal={sig} />)}
+              <>
+  <div className="bg-red-600 text-white p-2 rounded">
+    Signal Count: {activeSignals.length}
+  </div>
+
+  {activeSignals.map(sig => (
+    <SignalCard key={sig.id} signal={sig} />
+  ))}
+</>
             </div>
           )}
         </div>

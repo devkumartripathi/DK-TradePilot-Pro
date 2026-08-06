@@ -29,7 +29,8 @@ import {
   calcAdx,
   todayCandles,
   buildVwapData,
-} from "./ict/indicators.js";
+} from "./ict/indicators.js"; 
+import { selectStrike } from "./strike-selector/index.js";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,17 @@ const SMC_SETUPS: Record<SignalType, string> = {
 
 const TELEGRAM_DEBOUNCE_MS = 15 * 60_000; // 15 minutes
 const lastSent: Partial<Record<SignalType, number>> = {};
+
+
+// ── Signal Hysteresis ─────────────────────────────────────
+
+const SIGNAL_HOLD_MS = 60_000; // 60 seconds
+
+let lastSignal: SignalType | null = null;
+
+let lastSignalConfidence = 0;
+
+let lastSignalTime = 0;
 
 async function maybeSendTelegram(signal: any): Promise<boolean> {
   const type = signal.optionSignalType as SignalType;
@@ -151,8 +163,7 @@ console.log("VWAP:", vwap);
 
 function r2(n: number) { return Math.round(n * 100) / 100; } 
 
-function buildSignal(type: SignalType, confidence: number, factors: any[], ind: TechIndicators, data: BrokerMarketData, smcBias: string) {      
-
+function buildSignal(type: SignalType, confidence: number, factors: any[], ind: TechIndicators, data: BrokerMarketData, smcBias: string, strikeRecommendation?: any) {
   const spot   = data.spot.ltp;
   const meta   = SIGNAL_META[type]; 
   const isBuy  = meta.direction === "BUY";
@@ -183,23 +194,123 @@ console.log("=================================");
     ? (meta.optionType === "CE" ? optStrike.call.ltp : optStrike.put.ltp)
     : r2(45 + Math.random() * 30);
   const atmDelta = meta.optionType === "CE" ? ind.atmCallDelta : ind.atmPutDelta;
+const optionEntry = optionLtp;
 
-  const confidenceLabel = confidence >= 95 ? "VERY HIGH" : confidence >= 90 ? "HIGH" : "MODERATE";
+const optionSlPct = isBuy ? 0.25 : 0.35;
+
+const optionTarget1Pct = isBuy ? 0.30 : 0.20;
+const optionTarget2Pct = isBuy ? 0.60 : 0.40;
+const optionTarget3Pct = isBuy ? 1.00 : 0.70;
+
+const optionStopLoss = r2(
+  isBuy
+    ? optionEntry * (1 - optionSlPct)
+    : optionEntry * (1 + optionSlPct)
+);
+
+const optionTarget1 = r2(
+  isBuy
+    ? optionEntry * (1 + optionTarget1Pct)
+    : optionEntry * (1 - optionTarget1Pct)
+);
+
+const optionTarget2 = r2(
+  isBuy
+    ? optionEntry * (1 + optionTarget2Pct)
+    : optionEntry * (1 - optionTarget2Pct)
+);
+
+const optionTarget3 = r2(
+  isBuy
+    ? optionEntry * (1 + optionTarget3Pct)
+    : optionEntry * (1 - optionTarget3Pct)
+); 
+
+  const confidenceLabel =
+  confidence >= CONFIDENCE_BANDS.VERY_STRONG ? "VERY HIGH" :
+  confidence >= CONFIDENCE_BANDS.STRONG ? "HIGH" :
+  confidence >= CONFIDENCE_BANDS.MODERATE ? "MODERATE" :
+  "LOW"; 
+
+  const confidenceBand = 
+  confidence >= CONFIDENCE_BANDS.VERY_STRONG ? "VERY_STRONG" :
+  confidence >= CONFIDENCE_BANDS.STRONG ? "STRONG" :
+  confidence >= CONFIDENCE_BANDS.MODERATE ? "MODERATE" :
+  "WEAK";
+
+  
+  // --------------------------------------------------
+// AI TRADE QUALITY
+// --------------------------------------------------
+
+const tradeQuality =
+  confidence >= 90 &&
+  strikeRecommendation?.entryAllowed &&
+  strikeRecommendation?.liquidityRisk === "LOW"
+    ? "A+"
+    : confidence >= 80
+    ? "A"
+    : confidence >= 70
+    ? "B"
+    : confidence >= 60
+    ? "C"
+    : "AVOID";
+
+const qualityStars =
+  tradeQuality === "A+"
+    ? 5
+    : tradeQuality === "A"
+    ? 4
+    : tradeQuality === "B"
+    ? 3
+    : tradeQuality === "C"
+    ? 2
+    : 1;
+
+const qualityReason =
+  tradeQuality === "A+"
+    ? "Institutional-grade setup."
+    : tradeQuality === "A"
+    ? "High-quality setup."
+    : tradeQuality === "B"
+    ? "Tradable with discipline."
+    : tradeQuality === "C"
+    ? "Low conviction."
+    : "Avoid fresh entry.";
+
 
   return {
     id: `sig_${type.toLowerCase()}_${Date.now()}`,
     type: "INTRADAY", instrument: "NIFTY50", optionSignalType: type,
     direction: meta.direction,
     entry, stopLoss, target1, target2, target3,
-    riskReward, confidenceScore: confidence, confidenceLabel,
+    riskReward,
+confidenceScore: confidence,
+confidenceLabel,
+confidenceBand,
+
+tradeQuality,
+qualityStars,
+qualityReason,
     rationale: buildRationale(type, ind, spot, strike, stopLoss, target1, target2, smcBias),
     smcSetup: SMC_SETUPS[type],
     optionType: meta.optionType,
-    strikePrice: strike, optionLtp, expiry,
+strikePrice: strike,
+optionLtp,
+expiry,
+
+optionTrade: {
+  entry: optionEntry,
+  stopLoss: optionStopLoss,
+  target1: optionTarget1,
+  target2: optionTarget2,
+  target3: optionTarget3,
+},
     status: "ACTIVE",
     timestamp: new Date().toISOString(),
     brokerSource: data.source,
-    dataQuality: data.source === "kite" ? "LIVE" : "SIMULATED",
+dataQuality:
+  data.source === "simulator" ? "SIMULATED" : "LIVE", 
     indicators: {
       rsi: ind.rsi, atr: ind.atr, ema20: ind.ema20, ema50: ind.ema50,
       vwap: ind.vwap, pcr: ind.pcr, vix: ind.vix, callOI: ind.callOI,
@@ -210,6 +321,32 @@ console.log("=================================");
     },
     scoreFactors: factors,
     telegramAlertSent: false,
+    
+    aiStrike: strikeRecommendation
+  ? {
+      marketType: strikeRecommendation.marketType,
+
+      confidence: strikeRecommendation.confidence,
+
+      recommended: strikeRecommendation.recommended,
+
+      safe: strikeRecommendation.safe,
+
+      aggressive: strikeRecommendation.aggressive,
+
+      entryWindow: strikeRecommendation.entryWindow,
+
+      exitPlan: strikeRecommendation.exitPlan,
+
+      entryAllowed: strikeRecommendation.entryAllowed,
+
+      thetaFavorable: strikeRecommendation.thetaFavorable,
+
+      liquidityRisk: strikeRecommendation.liquidityRisk,
+
+      reason: strikeRecommendation.reason,
+    }
+  : null,
   };
 }
 
@@ -226,6 +363,36 @@ function buildRationale(type: SignalType, ind: TechIndicators, spot: number, str
 // ── Main export ───────────────────────────────────────────────────────────────
 
 const CONFIDENCE_THRESHOLD = 55;
+
+const CONFIDENCE_BANDS = {
+  WEAK: 55,
+  MODERATE: 70,
+  STRONG: 80,
+  VERY_STRONG: 90,
+} as const;
+
+function getConfidenceThreshold(
+  marketType: "TRENDING_BULLISH" | "TRENDING_BEARISH" | "SIDEWAYS" | "VOLATILE"
+): number {
+
+  switch (marketType) {
+
+    case "TRENDING_BULLISH":
+    case "TRENDING_BEARISH":
+      return 50;
+
+    case "SIDEWAYS":
+      return 68;
+
+    case "VOLATILE":
+      return 75;
+
+    default:
+      return CONFIDENCE_THRESHOLD;
+
+  }
+
+}
 
 export async function generateSignals(): Promise<{
   signals: any[];
@@ -252,7 +419,10 @@ export async function generateSignals(): Promise<{
   }
 
   const candles = data.candles15m;
-  if (candles.length < 20) {
+  console.log("15m candles:", candles.length);
+  if (candles.length < 20) { 
+
+    
     return {
       signals: [], noTradeZone: true,
       noTradeReason: "Insufficient candle data — market may not have opened yet.",
@@ -267,13 +437,238 @@ export async function generateSignals(): Promise<{
 
   // Score all four signal types
   const scored = scoreAll(ict, ind);
-  const best   = scored[0];
+const second = scored[1];
+
+let best = scored[0];
+
+const strikeRecommendation = selectStrike({
+  signalType: best.type,
+  market: data,
+  indicators: ind, ict,
+}); 
+// --------------------------------------------------
+// SIGNAL STABILIZER
+// --------------------------------------------------
+
+const confidenceGap =
+  best.confidence -
+  second.confidence;
+
+// Strong ICT Trend Lock
+if (
+  ict.trendStrength === "STRONG"
+) {
+
+  if (
+    ict.currentBias === "BEARISH" &&
+    best.type === "CALL_BUY" &&
+    second.type === "CALL_SELL"
+  ) {
+    best = second;
+  }
+
+  if (
+    ict.currentBias === "BULLISH" &&
+    best.type === "PUT_BUY" &&
+    second.type === "PUT_SELL"
+  ) {
+    best = second;
+  }
+
+}
+
+// Sideways → prefer sellers
+if (
+  strikeRecommendation.marketType ===
+  "SIDEWAYS" 
+) {
+
+  if (
+    confidenceGap < 5 && 
+    second.confidence >= CONFIDENCE_THRESHOLD && 
+    (
+      second.type === "CALL_SELL" ||
+      second.type === "PUT_SELL"
+    )
+  ) {
+    best = second;
+  }
+
+}
+  console.log("========== ALL SCORES ==========");
+console.table(
+  scored.map(s => ({
+    type: s.type,
+    confidence: s.confidence,
+    total: s.totalScore
+  }))
+);
+console.log("===============================");
+
+  let finalConfidence = best.confidence;
+
+let conflictScore = 0;
+
+// --------------------------------------------------
+// INSTITUTIONAL CONFLUENCE FILTER
+// --------------------------------------------------
+
+let confluence = 0;
+
+if (
+  (best.type === "CALL_BUY" || best.type === "PUT_SELL") &&
+  ict.currentBias === "BULLISH"
+)
+  confluence++;
+
+if (
+  (best.type === "PUT_BUY" || best.type === "CALL_SELL") &&
+  ict.currentBias === "BEARISH"
+)
+  confluence++;
+
+if (
+  (best.type === "CALL_BUY" || best.type === "PUT_SELL") &&
+  ind.emaSignal === "BULLISH"
+)
+  confluence++;
+
+if (
+  (best.type === "PUT_BUY" || best.type === "CALL_SELL") &&
+  ind.emaSignal === "BEARISH"
+)
+  confluence++;
+
+if (
+  (best.type === "CALL_BUY" || best.type === "PUT_SELL") &&
+  ind.vwapPosition === "ABOVE"
+)
+  confluence++;
+
+if (
+  (best.type === "PUT_BUY" || best.type === "CALL_SELL") &&
+  ind.vwapPosition === "BELOW"
+)
+  confluence++;
+
+if (ict.trendStrength === "STRONG")
+  confluence++;
+
+if (confluence < 3) {
+  finalConfidence -= 10;
+  conflictScore++;
+}
+
+// --------------------------------------------------
+// SIGNAL HYSTERESIS (Flip Protection)
+// --------------------------------------------------
+
+const nowMs = Date.now();
+
+if (
+  lastSignal &&
+  lastSignal !== best.type &&
+  nowMs - lastSignalTime < SIGNAL_HOLD_MS &&
+  best.confidence < lastSignalConfidence + 5
+) {
+
+  const previous = scored.find(
+    s => s.type === lastSignal
+  );
+
+  if (previous) {
+    best = previous;
+  }
+
+}
+
+// EMA Conflict
+if (
+  (best.type === "CALL_BUY" && ind.emaSignal === "BEARISH") ||
+  (best.type === "PUT_BUY" && ind.emaSignal === "BULLISH")
+) {
+  finalConfidence -= 10;
+  conflictScore++;
+}
+
+// VWAP Conflict
+if (
+  (best.type === "CALL_BUY" && ind.vwapPosition === "BELOW") ||
+  (best.type === "PUT_BUY" && ind.vwapPosition === "ABOVE")
+) {
+  finalConfidence -= 8;
+  conflictScore++;
+}
+
+// ADX Filter
+if (ind.adx < 18) {
+  finalConfidence -= 6;
+} else if (ind.adx > 30) {
+  finalConfidence += 4;
+}
+
+// PCR Filter
+if (best.type === "CALL_BUY" && ind.pcr < 0.90) {
+  finalConfidence -= 5;
+}
+
+if (best.type === "PUT_BUY" && ind.pcr > 1.10) {
+  finalConfidence -= 5;
+} 
+// Strong trend alignment bonus
+if (
+  ict.trendStrength === "STRONG" &&
+  (
+    (best.type === "CALL_BUY"  && ind.emaSignal === "BULLISH") ||
+    (best.type === "PUT_BUY"   && ind.emaSignal === "BEARISH") ||
+    (best.type === "CALL_SELL" && ind.emaSignal === "BEARISH") ||
+    (best.type === "PUT_SELL"  && ind.emaSignal === "BULLISH")
+  )
+) {
+  finalConfidence += 3;
+}
+
+// Clamp confidence between 0 and 100
+finalConfidence = Math.max(0, Math.min(100, finalConfidence));
+const entryAllowed =
+  conflictScore < 2 &&
+finalConfidence >=
+getConfidenceThreshold(
+  strikeRecommendation.marketType
+);
+
+
+console.log("========== SIGNAL SCORES ==========");
+console.table(
+  scored.map((s) => ({
+    type: s.type,
+    confidence: s.confidence,
+  }))
+);
+
+console.log("Best Signal:", best.type);
+console.log("Raw Confidence:", best.confidence);
+console.log("Final Confidence:", finalConfidence);
+console.log("Conflict Score:", conflictScore);
+console.log("==================================");
+
+// Save stable signal
+
+lastSignal = best.type;
+
+lastSignalConfidence = finalConfidence;
+
+lastSignalTime = nowMs;
+
+
+console.log("========== AI STRIKE ==========");
+console.dir(strikeRecommendation, { depth: null });
+console.log("===============================");
 
   // No-trade zone check (lunch hour)
-  const noTradeZone   = isLunch;
-  const noTradeReason = isLunch
-    ? "Lunch consolidation zone (12:00–13:30 IST). Low liquidity — avoid new entries."
-    : null;
+  const noTradeZone   = false;
+  const noTradeReason = null;
+    
 
   const isExpiry = now.getDay() === 4;
   const sessionTime = isExpiry ? "EXPIRY_DAY" : "NORMAL_SESSION";
@@ -284,9 +679,21 @@ export async function generateSignals(): Promise<{
 
   // Emit signal only if confidence ≥ threshold and not in no-trade zone
   let signals: any[] = [];
-  if (!noTradeZone && best.confidence >= CONFIDENCE_THRESHOLD) {
+  if (!noTradeZone) {
     const smcBias = ict.currentBias;
-    const signal  = buildSignal(best.type, best.confidence, best.factors, ind, data, smcBias);
+
+    const signal = buildSignal(
+  best.type,
+  finalConfidence,
+  best.factors,
+  ind,
+  data,
+  smcBias,
+  strikeRecommendation
+);
+
+signal.status = entryAllowed ? "ACTIVE" : "WAITING";
+
     signals.push(signal);
 
     // Auto Telegram dispatch
@@ -296,9 +703,11 @@ export async function generateSignals(): Promise<{
         if (sent) logger.info({ type: signal.optionSignalType, confidence: best.confidence }, "Telegram alert dispatched");
       }).catch(err => logger.warn({ err }, "Telegram dispatch failed"));
       signal.telegramAlertSent = true; // optimistic — updated in .then()
+      
     }
   }
 
+  
   return {
     signals, noTradeZone, noTradeReason,
     marketBias, sessionTime,

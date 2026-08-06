@@ -37,8 +37,30 @@ function pct(list: ScoreFactor[]): number {
   return r2((total / max) * 100);
 }
 
-// ── OB proximity scoring ──────────────────────────────────────────────────────
-function obScore(dist: number, maxPts: number): number {
+// ── OB proximity scoring ────────────────────────────────────────────────────── 
+function bonus(confidence: number, ict: ICTContext, ind: TechIndicators): number {
+
+  let score = confidence;
+
+  if (ict.trendStrength === "STRONG")
+    score += 3;
+
+  if (ind.adx >= 30)
+    score += 3;
+  else if (ind.adx >= 25)
+    score += 2;
+  else if (ind.adx < 18)
+    score -= 5;
+
+  if (Math.abs(ind.putOI - ind.callOI) > 2_000_000)
+    score += 2;
+
+  return Math.max(0, Math.min(100, r2(score)));
+}
+
+
+
+function obScore(dist: number, maxPts: number): number { 
   if (dist < 0) return 0;           // OB is on wrong side
   if (dist < 20)  return maxPts;    // price within OB zone — ideal
   if (dist < 50)  return maxPts * 0.8;
@@ -150,7 +172,7 @@ export function scoreCallBuy(ict: ICTContext, ind: TechIndicators): ScoredSignal
     `Max Pain ${ind.maxPain.toFixed(0)} — ${ind.maxPain < spot ? "below spot: OI gravity bullish" : "above spot: overhead OI pressure"}`,
     "SUPPORT");
 
-  return { type: "CALL_BUY", confidence: pct(factors), factors, totalScore: factors.reduce((s,f)=>s+f.score,0), maxPossibleScore: factors.reduce((s,f)=>s+f.maxScore,0) };
+  return { type: "CALL_BUY", confidence: bonus(pct(factors), ict, ind), factors, totalScore: factors.reduce((s,f)=>s+f.score,0), maxPossibleScore: factors.reduce((s,f)=>s+f.maxScore,0) };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -251,7 +273,7 @@ export function scorePutBuy(ict: ICTContext, ind: TechIndicators): ScoredSignal 
     `Max Pain ${ind.maxPain.toFixed(0)} — ${ind.maxPain > spot ? "above spot: OI gravity bearish" : "below spot: gravity mixed"}`,
     "SUPPORT");
 
-  return { type: "PUT_BUY", confidence: pct(factors), factors, totalScore: factors.reduce((s,f)=>s+f.score,0), maxPossibleScore: factors.reduce((s,f)=>s+f.maxScore,0) };
+  return { type: "PUT_BUY", confidence: bonus(pct(factors), ict, ind), factors, totalScore: factors.reduce((s,f)=>s+f.score,0), maxPossibleScore: factors.reduce((s,f)=>s+f.maxScore,0) };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -365,7 +387,7 @@ export function scoreCallSell(ict: ICTContext, ind: TechIndicators): ScoredSigna
     `Max Pain ${ind.maxPain.toFixed(0)} — ${ind.maxPain < spot ? `${(spot - ind.maxPain).toFixed(0)} pts below spot: OI gravity pulls price down, protects short call` : "max pain near or above spot: gravity mixed"}`,
     "SUPPORT");
 
-  return { type: "CALL_SELL", confidence: pct(factors), factors, totalScore: factors.reduce((s,f)=>s+f.score,0), maxPossibleScore: factors.reduce((s,f)=>s+f.maxScore,0) };
+  return { type: "CALL_SELL", confidence: bonus(pct(factors), ict, ind), factors, totalScore: factors.reduce((s,f)=>s+f.score,0), maxPossibleScore: factors.reduce((s,f)=>s+f.maxScore,0) };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -477,7 +499,7 @@ export function scorePutSell(ict: ICTContext, ind: TechIndicators): ScoredSignal
     `Max Pain ${ind.maxPain.toFixed(0)} — ${ind.maxPain > spot ? `${(ind.maxPain - spot).toFixed(0)} pts above spot: OI gravity pulls price up, protects short put` : "max pain below spot: gravity mixed"}`,
     "SUPPORT");
 
-  return { type: "PUT_SELL", confidence: pct(factors), factors, totalScore: factors.reduce((s,f)=>s+f.score,0), maxPossibleScore: factors.reduce((s,f)=>s+f.maxScore,0) };
+  return { type: "PUT_SELL", confidence: bonus(pct(factors), ict, ind), factors, totalScore: factors.reduce((s,f)=>s+f.score,0), maxPossibleScore: factors.reduce((s,f)=>s+f.maxScore,0) };
 }
 
 // ── Score all four signal types ───────────────────────────────────────────────

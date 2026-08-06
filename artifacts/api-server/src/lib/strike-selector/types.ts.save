@@ -1,0 +1,55 @@
+import type { SignalType, TechIndicators } from "../scoring/types.js";
+import type { BrokerMarketData, OptionStrike } from "../broker/types.js";
+
+export interface StrikeScore {
+  strike: OptionStrike;
+
+  score: number;
+
+  premiumScore: number;
+  oiScore: number;
+  deltaScore: number;
+  ivScore: number;
+  distanceScore: number;
+
+  reason: string[];
+}
+
+export interface StrikeRecommendation {
+
+  signalType: SignalType;
+
+  recommended: StrikeScore;
+
+  safe: StrikeScore;
+
+  aggressive: StrikeScore;
+
+  marketType:
+    | "TRENDING_BULLISH"
+    | "TRENDING_BEARISH"
+    | "SIDEWAYS"
+    | "VOLATILE";
+
+  entryWindow: {
+    from: string;
+    to: string;
+    lastSafeEntry: string;
+  };
+
+  exitPlan: {
+    targetExit: string;
+    mandatoryExit: string;
+  };
+
+  confidence: number;
+}
+
+export interface StrikeSelectorInput {
+
+  signalType: SignalType;
+
+  market: BrokerMarketData;
+
+  indicators: TechIndicators;
+}

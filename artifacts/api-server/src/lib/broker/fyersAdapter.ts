@@ -37,30 +37,30 @@ if (!token) {
 }
 let history: any = { candles: [] };
 
-const searchDate = new Date();
+  const rangeTo = new Date();
 
-for (let i = 0; i < 7; i++) {
-  const date = new Date(searchDate);
-  date.setDate(searchDate.getDate() - i);
+  const rangeFrom = new Date();
+  rangeFrom.setDate(rangeTo.getDate() - 15);
 
-  const day = date.toISOString().split("T")[0];
+  const from = rangeFrom.toISOString().split("T")[0];
+  const to = rangeTo.toISOString().split("T")[0];
 
   history = await getHistoryData(
     token,
     "NSE:NIFTY50-INDEX",
     "15",
-    day,
-    day
+    from,
+    to
   );
 
-  console.log("History Date:", day);
+  console.log("History Range:", from, "→", to);
   console.log("Candles:", history?.candles?.length ?? 0);
 
-  if (history?.candles?.length > 0) {
-    console.log("Using Trading Day:", day);
-    break;
+  if (!history?.candles?.length) {
+    throw new Error(
+      `No historical candles found between ${from} and ${to}.`
+    );
   }
-}
 
 if (!history?.candles?.length) {
   throw new Error("No historical candles found in last 7 days.");

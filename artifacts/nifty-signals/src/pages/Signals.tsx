@@ -8,6 +8,7 @@ import {
   RefreshCw, Send, Settings, Shield, TrendingUp, XCircle, Zap,
 } from "lucide-react"
 
+import { AiTimingPanel } from "@/components/AiTimingPanel";
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type SignalType = "CALL_BUY" | "CALL_SELL" | "PUT_BUY" | "PUT_SELL"
@@ -274,7 +275,60 @@ type Signal = {
     rsiSignal: string; emaSignal: string; vwapPosition: string; volumeSignal: string;
   };
   scoreFactors: Array<{ name: string; score: number; maxScore: number; signal: string }>;
-  telegramAlertSent: boolean;
+  telegramAlertSent: boolean; 
+  aiStrike?: {
+      marketType: string;
+      confidence: number;
+
+      recommended: {
+        strike: {
+          strike: number;
+        };
+        score: number; 
+        recommendation:
+  | "BEST"
+  | "GOOD"
+  | "SAFE"
+  | "AGGRESSIVE"
+  | "AVOID";
+      };
+
+      safe: {
+        strike: {
+          strike: number;
+        };
+        score: number;
+        recommendation:
+  | "BEST"
+  | "GOOD"
+  | "SAFE"
+  | "AGGRESSIVE"
+  | "AVOID";
+      };
+
+      aggressive: {
+        strike: {
+          strike: number;
+        };
+        score: number;
+        recommendation:
+  | "BEST"
+  | "GOOD"
+  | "SAFE"
+  | "AGGRESSIVE"
+  | "AVOID";
+      };
+      entryWindow: {
+          from: string;
+          to: string;
+          lastSafeEntry: string;
+        };
+
+        exitPlan: {
+          targetExit: string;
+          mandatoryExit: string;
+        };
+  };  
 }
 
 function PremiumSignalCard({ signal }: { signal: Signal }) {
@@ -342,7 +396,125 @@ function PremiumSignalCard({ signal }: { signal: Signal }) {
         <span className={cn("text-xs font-mono font-bold px-3 py-1 rounded-full border", style.badge)}>
           {signal.smcSetup}
         </span>
-      </div>
+      </div> 
+      {/* ── AI Strike Recommendation ── */}
+        {signal.aiStrike && (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                AI Strike Recommendation
+              </span>
+
+              <Badge variant="secondary">
+                {signal.aiStrike.marketType}
+              </Badge>
+              <div className="text-[10px] font-bold text-success">
+  {signal.aiStrike.confidence.toFixed(1)}%
+</div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+
+              <div className="rounded border border-success/30 p-3">
+                <div className="text-[10px] text-muted-foreground">
+                  Recommended
+                </div>
+
+                <div className="font-black text-success">
+                  {signal.aiStrike.recommended.strike.strike}
+                </div>
+
+                <div className="text-xs">
+                  Score {signal.aiStrike.recommended.score}
+                  <div className="mt-1 text-[10px] font-bold text-success">
+  {signal.aiStrike.recommended.recommendation}
+</div>
+                </div>
+              </div> 
+              <div className="rounded border border-primary/30 p-3">
+                <div className="text-[10px] text-muted-foreground">
+                  Safe
+                </div>
+
+                <div className="font-black">
+                  {signal.aiStrike.safe.strike.strike}
+                </div>
+
+                <div className="text-xs">
+                  Score {signal.aiStrike.safe.score}
+                </div>
+              </div>
+
+              <div className="rounded border border-warning/30 p-3">
+                <div className="text-[10px] text-muted-foreground">
+                  Aggressive
+                </div>
+
+                <div className="font-black">
+                  {signal.aiStrike.aggressive.strike.strike}
+                </div>
+
+                <div className="text-xs">
+                  Score {signal.aiStrike.aggressive.score}
+                </div>
+              </div>
+
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+
+                <div className="rounded border border-border p-3">
+                  <div className="text-[10px] text-muted-foreground">
+                    Entry Window
+                  </div>
+
+                  <div className="font-bold"> 
+                    
+                    {signal.aiStrike.entryWindow.from} 
+                    
+                    {" → "}
+                    
+                    {signal.aiStrike.entryWindow.to}
+                    
+                  </div>
+                </div>
+
+                <div className="rounded border border-border p-3">
+                  <div className="text-[10px] text-muted-foreground">
+                    Last Safe Entry
+                  </div>
+
+                  <div className="font-bold">
+                    {signal.aiStrike.entryWindow.lastSafeEntry}
+                  </div>
+                </div>
+
+                <div className="rounded border border-border p-3">
+                  <div className="text-[10px] text-muted-foreground">
+                    Target Exit
+                  </div>
+
+                  <div className="font-bold text-success">
+                    {signal.aiStrike.exitPlan.targetExit}
+                  </div>
+                </div>
+
+                <div className="rounded border border-destructive/30 p-3">
+                  <div className="text-[10px] text-muted-foreground">
+                    Mandatory Exit
+                  </div>
+
+                  <div className="font-bold text-destructive">
+                    {signal.aiStrike.exitPlan.mandatoryExit}
+                  </div>
+                </div>
+
+              </div>
+
+            <div className="mt-3 text-xs text-muted-foreground">
+              AI Confidence : {signal.aiStrike.confidence.toFixed(1)}%
+            </div>
+          </div>
+        )}
 
       {/* ── Indicators grid ── */}
       <div>

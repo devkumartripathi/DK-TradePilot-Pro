@@ -1,4 +1,13 @@
-import { parseSymbolMaster } from "./symbolMasterParser";
+import { parseSymbolMaster } from "../services/symbolMasterParser";
+export interface SymbolMasterRecord {
+  token: string;
+  description: string;
+  exchange: string;
+  symbol: string;
+  underlying: string;
+  expiry: string;
+  raw: string[];
+}
 
 const FYERS_NSE_FO_URL =
   "https://public.fyers.in/sym_details/NSE_FO.csv";

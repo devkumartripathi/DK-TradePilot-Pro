@@ -52,8 +52,71 @@ console.log("Nifty DATA =",nifty);
               <span className="text-[10px] text-muted-foreground font-sans uppercase tracking-wider">{label}</span>
               <span className={cn("text-sm", color)}>{value}</span>
             </div>
-          ))}
+          ))} 
         </div>
+<div className="hidden xl:grid grid-cols-4 gap-x-6 gap-y-1 text-sm font-mono">
+  {[
+    {
+      label: "Prev High",
+      value: (nifty.previousDayHigh ?? 0).toFixed(2),
+      color: "text-success",
+    },
+    {
+      label: "Prev Low",
+      value: (nifty.previousDayLow ?? 0).toFixed(2),
+      color: "text-destructive",
+    },
+    {
+      label: "Week High",
+      value: (nifty.weekHigh ?? 0).toFixed(2),
+      color: "text-success",
+    },
+    {
+      label: "Week Low",
+      value: (nifty.weekLow ?? 0).toFixed(2),
+      color: "text-destructive",
+    },
+    {
+      label: "Month High",
+      value: (nifty.monthHigh ?? 0).toFixed(2),
+      color: "text-success",
+    },
+    {
+      label: "Month Low",
+      value: (nifty.monthLow ?? 0).toFixed(2),
+      color: "text-destructive",
+    },
+  ].map(({ label, value, color }) => (
+    <div key={label} className="flex flex-col">
+      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+        {label}
+      </span>
+      <span className={cn("text-sm", color)}>{value}</span>
+    </div>
+  ))}
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         <div className="hidden lg:grid grid-cols-2 gap-x-6 gap-y-0.5 text-sm font-mono">
           <div className="flex flex-col">

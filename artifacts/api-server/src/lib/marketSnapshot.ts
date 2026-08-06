@@ -33,23 +33,14 @@ export interface MarketSnapshot {
 
   timestamp: string;
 } 
-
-interface DailyCandle {
-  time: Date;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-export interface MarketSnapshot { 
-}
 export async function getMarketSnapshot(): Promise<MarketSnapshot> {
  
     console.log("✅ getMarketSnapshot() called");
 
   const accessToken = getAccessToken();
 
+  console.log("MarketSnapshot Token =", accessToken);
+  
   if (!accessToken) {
     throw new Error("FYERS access token not available");
   }
@@ -87,6 +78,10 @@ const candles: DailyCandle[] =
 // ----------------------------
 
 const quote = await getFyersQuote();
+
+if (!quote) {
+  throw new Error("FYERS quote unavailable");
+}
 // ----------------------------
 // Previous Trading Day
 // ----------------------------
@@ -99,9 +94,13 @@ const previousDay =
 // ----------------------------
 // 52 Week High / Low
 // ----------------------------
+const week52High = candles.length
+  ? Math.max(...candles.map((c) => c.high))
+  : (quote?.high_price ?? 0);
 
-const week52High = Math.max(...candles.map((c) => c.high));
-const week52Low = Math.min(...candles.map((c) => c.low));
+const week52Low = candles.length
+  ? Math.min(...candles.map((c) => c.low))
+  : (quote?.low_price ?? 0);
 
 // ----------------------------
 // Current Week
@@ -149,11 +148,11 @@ const monthLow = currentMonth.length
 
     open: quote?.open_price ?? 0,
     high: quote?.high_price ?? 0,
-    low: quote?.low_price ?? 0,
-    previousClose: quote?.prev_close_price ?? 0,
+    low: quote?.low_price ?? 0, 
 
-    previousDayHigh: previousDay.high,
-    previousDayLow: previousDay.low,
+    previousClose: quote?.prev_close_price ?? 0,
+previousDayHigh: previousDay?.high ?? quote?.high_price ?? 0,
+previousDayLow: previousDay?.low ?? quote?.low_price ?? 0,
 
     weekHigh,
     weekLow,

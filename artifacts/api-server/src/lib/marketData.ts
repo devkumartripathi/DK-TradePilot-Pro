@@ -19,7 +19,8 @@ import { buildIctContext } from "./ict/context";
 import type { OHLCV } from "./broker/types.js";
 import { buildPresentation, RawKeyLevel } from "./key-levels"; 
 import { getFyersVix } from "./fyersVix"; 
-import { getMarketSnapshot } from "./marketSnapshot";
+import { getMarketSnapshot } from "./marketSnapshot"; 
+import { calculateSmcScore } from "./smcConfluence"; 
 // ── Price state ───────────────────────────────────────────────────────────────
 
 let baseNifty = 24580.35;
@@ -247,7 +248,7 @@ console.log("FVGs:", ictContext.fvgs);
 console.log("ICT Keys:", Object.keys(ictContext));
 console.log("Liquidity Levels:", ictContext.liquidityLevels);
 console.log("Liquidity Sweeps:", ictContext.liquiditySweeps);
-
+console.log("Swings:", ictContext.swings);
 
   const bull = Math.random() > 0.4;
   const latestHigh =
@@ -259,6 +260,8 @@ const latestLow =
   [...ictContext.swings]
     .reverse()
     .find(s => s.type === "LOW");
+    console.log("Latest HIGH Swing:", latestHigh);
+console.log("Latest LOW Swing :", latestLow);
 
   const swingHigh = r2(ltp + 80 + Math.random() * 120);
   const swingLow  = r2(ltp - 80 - Math.random() * 120);
@@ -266,6 +269,75 @@ const latestLow =
 
   console.log("Nearest Bullish OB:", ictContext.nearestBullishOB);
 console.log("Nearest Bearish OB:", ictContext.nearestBearishOB);
+
+const rankKeyLevel = (level: {
+  label: string;
+  strength: string;
+}) => {
+  let score = 0;
+
+  // Strength
+  if (level.strength === "STRONG") score += 100;
+  else if (level.strength === "MODERATE") score += 60;
+  else score += 20;
+
+  // Type Priority
+  if (level.label.includes("Order Block")) score += 50;
+  else if (level.label.includes("Swing")) score += 40;
+  else if (level.label.includes("FVG")) score += 30;
+
+  return score;
+};
+const keyLevels = [
+ 
+  ...(ictContext.nearestBearishOB
+    ? [{
+        level: ictContext.nearestBearishOB.top,
+        type: "RESISTANCE" as const,
+        strength: ictContext.nearestBearishOB.strength,
+        label: "Bearish Order Block",
+      }]
+    : []),
+
+  ...(ictContext.nearestBullishOB
+    ? [{
+        level: ictContext.nearestBullishOB.bottom,
+        type: "SUPPORT" as const,
+        strength: ictContext.nearestBullishOB.strength,
+        label: "Bullish Order Block",
+      }]
+    : []),
+
+  ...(ictContext.recentBearishFVG
+    ? [{
+        level: ictContext.recentBearishFVG.top,
+        type: "RESISTANCE" as const,
+        strength: "MODERATE" as const,
+        label: "Bearish FVG",
+      }]
+    : []),
+
+  ...(ictContext.recentBullishFVG
+    ? [{
+        level: ictContext.recentBullishFVG.bottom,
+        type: "SUPPORT" as const,
+        strength: "MODERATE" as const,
+        label: "Bullish FVG",
+      }]
+    : []),
+];
+
+const confluence = calculateSmcScore({
+  marketStructure: {
+    trend: ictContext.trendDirection,
+  },
+  bos: ictContext.bos,
+  choch: ictContext.choch,
+  orderBlocks: ictContext.orderBlocks,
+  fairValueGaps: ictContext.fvgs,
+});
+
+console.log("SMC Confluence =", confluence); 
 
   return {
    marketStructure: {
@@ -337,67 +409,13 @@ fairValueGaps: ictContext.fvgs.map(fvg => ({
   time: fvg.time,
 })),
 
+  
 bias: ictContext.currentBias,
+  
+keyLevels,  
+  
+confluence, 
 
-keyLevels: [
-  ...(latestHigh
-    ? [{
-        level: latestHigh.price,
-        type: "RESISTANCE" as const,
-        strength: latestHigh.strength === "MAJOR"
-          ? "STRONG"
-          : "WEAK",
-        label: "Swing High",
-      }]
-    : []),
-
-  ...(latestLow
-    ? [{
-        level: latestLow.price,
-        type: "SUPPORT" as const,
-        strength: latestLow.strength === "MAJOR"
-          ? "STRONG"
-          : "WEAK",
-        label: "Swing Low",
-      }]
-    : []),
-
-  ...(ictContext.nearestBearishOB
-    ? [{
-        level: ictContext.nearestBearishOB.top,
-        type: "RESISTANCE" as const,
-        strength: ictContext.nearestBearishOB.strength,
-        label: "Bearish Order Block",
-      }]
-    : []),
-
-  ...(ictContext.nearestBullishOB
-    ? [{
-        level: ictContext.nearestBullishOB.bottom,
-        type: "SUPPORT" as const,
-        strength: ictContext.nearestBullishOB.strength,
-        label: "Bullish Order Block",
-      }]
-    : []),
-
-  ...(ictContext.recentBearishFVG
-    ? [{
-        level: ictContext.recentBearishFVG.top,
-        type: "RESISTANCE" as const,
-        strength: "MODERATE" as const,
-        label: "Bearish FVG",
-      }]
-    : []),
-
-  ...(ictContext.recentBullishFVG
-    ? [{
-        level: ictContext.recentBullishFVG.bottom,
-        type: "SUPPORT" as const,
-        strength: "MODERATE" as const,
-        label: "Bullish FVG",
-      }]
-    : []),
-],
   };
 }
 

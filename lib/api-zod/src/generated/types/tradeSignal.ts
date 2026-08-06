@@ -5,15 +5,19 @@
  * Nifty AI Auto Signals API
  * OpenAPI spec version: 0.1.0
  */
+import type { AiStrike } from './aiStrike';
+import type { OptionTrade } from './optionTrade';
 import type { ScoreFactor } from './scoreFactor';
 import type { SignalIndicators } from './signalIndicators';
 import type { TradeSignalBrokerSource } from './tradeSignalBrokerSource';
+import type { TradeSignalConfidenceBand } from './tradeSignalConfidenceBand';
 import type { TradeSignalConfidenceLabel } from './tradeSignalConfidenceLabel';
 import type { TradeSignalDataQuality } from './tradeSignalDataQuality';
 import type { TradeSignalDirection } from './tradeSignalDirection';
 import type { TradeSignalOptionSignalType } from './tradeSignalOptionSignalType';
 import type { TradeSignalOptionType } from './tradeSignalOptionType';
 import type { TradeSignalStatus } from './tradeSignalStatus';
+import type { TradeSignalTradeQuality } from './tradeSignalTradeQuality';
 import type { TradeSignalType } from './tradeSignalType';
 
 export interface TradeSignal {
@@ -43,4 +47,10 @@ export interface TradeSignal {
   telegramAlertSent: boolean;
   brokerSource?: TradeSignalBrokerSource;
   dataQuality?: TradeSignalDataQuality;
+  confidenceBand?: TradeSignalConfidenceBand;
+  tradeQuality?: TradeSignalTradeQuality;
+  qualityStars?: number;
+  qualityReason?: string;
+  optionTrade?: OptionTrade;
+  aiStrike?: AiStrike;
 }

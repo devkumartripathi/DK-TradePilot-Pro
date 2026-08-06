@@ -6,7 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './aiStrike';
 export * from './candle';
+export * from './entryWindow';
+export * from './exitPlan';
 export * from './fairValueGap';
 export * from './fairValueGapType';
 export * from './fyersAnalysis';
@@ -32,6 +35,7 @@ export * from './optionsMetrics';
 export * from './optionsMetricsPcrSignal';
 export * from './optionsMetricsVixSignal';
 export * from './optionStrike';
+export * from './optionTrade';
 export * from './orderBlock';
 export * from './orderBlockStrength';
 export * from './orderBlockType';
@@ -49,6 +53,7 @@ export * from './structureEventDirection';
 export * from './structureEventStrength';
 export * from './tradeSignal';
 export * from './tradeSignalBrokerSource';
+export * from './tradeSignalConfidenceBand';
 export * from './tradeSignalConfidenceLabel';
 export * from './tradeSignalDataQuality';
 export * from './tradeSignalDirection';
@@ -57,6 +62,7 @@ export * from './tradeSignalOptionType';
 export * from './tradeSignals';
 export * from './tradeSignalsMarketBias';
 export * from './tradeSignalStatus';
+export * from './tradeSignalTradeQuality';
 export * from './tradeSignalType';
 export * from './vwapData';
 export * from './vwapDataPriceVsVwap';

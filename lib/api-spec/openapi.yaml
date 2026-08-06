@@ -881,3 +881,95 @@ components:
         dataQuality:
           type: string
           enum: ["LIVE", "SIMULATED"]
+        confidenceBand:
+          type: string
+          enum: ["VERY_STRONG", "STRONG", "MODERATE", "WEAK"]
+
+        tradeQuality:
+          type: string
+          enum: ["A+", "A", "B", "C", "AVOID"]
+
+        qualityStars:
+          type: number
+
+        qualityReason:
+          type: string
+
+        optionTrade:
+          $ref: "#/components/schemas/OptionTrade"
+
+        aiStrike:
+          $ref: "#/components/schemas/AiStrike"
+    OptionTrade:
+      type: object
+      required:
+        - entry
+        - stopLoss
+        - target1
+        - target2
+        - target3
+      properties:
+        entry:
+          type: number
+        stopLoss:
+          type: number
+        target1:
+          type: number
+        target2:
+          type: number
+        target3:
+          type: number
+
+    EntryWindow:
+      type: object
+      required:
+        - from
+        - to
+        - lastSafeEntry
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+        lastSafeEntry:
+          type: string
+
+    ExitPlan:
+      type: object
+      required:
+        - targetExit
+        - stopLossExit
+        - timeExit
+      properties:
+        targetExit:
+          type: string
+        stopLossExit:
+          type: string
+        timeExit:
+          type: string
+
+    AiStrike:
+      type: object
+      properties:
+        marketType:
+          type: string
+        confidence:
+          type: number
+        recommended:
+          type: string
+        safe:
+          type: string
+        aggressive:
+          type: string
+        entryAllowed:
+          type: boolean
+        thetaFavorable:
+          type: boolean
+        liquidityRisk:
+          type: string
+        reason:
+          type: string
+        entryWindow:
+          $ref: "#/components/schemas/EntryWindow"
+        exitPlan:
+          $ref: "#/components/schemas/ExitPlan"
