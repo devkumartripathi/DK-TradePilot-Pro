@@ -12,8 +12,10 @@ import { Badge } from "@/components/ui/badge"
 import { cn, formatCurrency, formatLargeNumber } from "@/lib/utils"
 import {
   Activity, AlertTriangle, ArrowDown, ArrowUp, BarChart2,
-  Crosshair, Layers, Target, TrendingUp, Zap, Gauge 
+  Crosshair, Layers, Target, TrendingUp, Zap, Gauge,ShieldCheck
 } from "lucide-react"
+
+import { getMarketCurrentStatus } from "@/lib/marketCurrentStatus"
 
 function MetricCard({ label, value, sub, variant, icon: Icon }: {
   label: string; value: React.ReactNode; sub?: React.ReactNode;
@@ -301,6 +303,15 @@ const now = new Date()
 const minutes = now.getHours() * 60 + now.getMinutes()
 const isMarketOpen = minutes >= 555 && minutes <= 930 
 
+const marketStatus = getMarketCurrentStatus({
+  trend: (fyers as any)?.trend?.trend,
+  rsi: fyers?.rsi14,
+  vwapPosition: vwap?.priceVsVwap,
+  adx: 26, // temporary existing trend-strength placeholder
+  pcr: metrics?.pcr,
+  vix: metrics?.indiaVix,
+});
+
   const activeSignals = signals?.signals?.filter(s => s.status === "ACTIVE") ?? [];
   console.log("Active Signals:", activeSignals);
 console.log("All Signals:", signals);
@@ -391,6 +402,51 @@ console.log("FYERS Analysis:", fyers)
       : undefined
   }
 />
+
+<div className="rounded-lg border border-border bg-card p-4 flex flex-col gap-2">
+  <div className="flex items-center justify-between">
+    <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+      Market Status
+    </span>
+    <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" />
+  </div>
+
+  <div
+    className={cn(
+      "text-lg font-bold font-mono leading-tight",
+      marketStatus.status.includes("BULLISH") && "text-success",
+      marketStatus.status.includes("BEARISH") && "text-destructive",
+      marketStatus.status === "NEUTRAL" && "text-warning",
+      marketStatus.status === "RANGE" && "text-warning"
+    )}
+  >
+    {marketStatus.status}
+  </div>
+
+  <div className="text-sm font-semibold text-foreground">
+    {marketStatus.score}/10
+  </div>
+
+  <div className="text-xs text-muted-foreground leading-relaxed min-h-[32px]">
+    {marketStatus.summary}
+  </div>
+
+  <div className="border-t border-border pt-2 text-xs space-y-1">
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-muted-foreground">Avoid</span>
+      <span className="font-semibold text-right">{marketStatus.avoid}</span>
+    </div>
+
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-muted-foreground">Watch</span>
+      <span className="font-semibold text-right">
+        {smc?.keyLevels?.find(k => k.type === "RESISTANCE")?.level?.toFixed(0) ??
+          smc?.keyLevels?.find(k => k.type === "SUPPORT")?.level?.toFixed(0) ??
+          "VWAP"}
+      </span>
+    </div>
+  </div>
+</div>
 
 <MetricCard
   label="RSI (14)"
