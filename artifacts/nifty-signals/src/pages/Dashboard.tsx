@@ -313,6 +313,7 @@ const marketStatus = getMarketCurrentStatus({
   adx: liveAdx, 
   pcr: metrics?.pcr,
   vix: metrics?.indiaVix,
+  price: fyers?.price, 
 });
 
   
@@ -408,6 +409,16 @@ console.log("FYERS Analysis:", fyers)
 />
 
 <div className="rounded-lg border border-border bg-card p-4 flex flex-col gap-2">
+<div className="flex items-center justify-between text-xs mt-2">
+  <span className="text-muted-foreground">ATM Strike</span>
+  <span className="font-semibold">{marketStatus.atmStrike}</span>
+</div>
+
+<div className="flex items-center justify-between text-xs mt-2">
+  <span className="text-muted-foreground">Watch Strike</span>
+  <span className="font-semibold">{marketStatus.watchStrike}</span>
+</div>
+
   <div className="flex items-center justify-between">
     <span className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
       Market Status

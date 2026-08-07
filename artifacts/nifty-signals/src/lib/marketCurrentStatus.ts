@@ -3,6 +3,9 @@ export type MarketCurrentStatus = {
   score: number;
   summary: string;
   avoid: string;
+  watch: number;
+  atmStrike: number;
+  watchStrike: number;
 };
 
 type Input = {
@@ -12,9 +15,13 @@ type Input = {
   adx?: number;
   pcr?: number;
   vix?: number;
+  price?: number; 
 };
 
-export function getMarketCurrentStatus(input: Input): MarketCurrentStatus {
+export function getMarketCurrentStatus(input: Input): MarketCurrentStatus { 
+  const price = input.price ?? 0;
+  const atmStrike = Math.round(price / 50) * 50;
+  const watchStrike = atmStrike;
   let score = 0;
 
   if (input.trend === "BULLISH") score += 2;
@@ -71,5 +78,8 @@ export function getMarketCurrentStatus(input: Input): MarketCurrentStatus {
     score,
     summary: parts.slice(0, 3).join(" • "),
     avoid,
+    watch: watchStrike,
+    atmStrike,
+    watchStrike,
   };
 }
