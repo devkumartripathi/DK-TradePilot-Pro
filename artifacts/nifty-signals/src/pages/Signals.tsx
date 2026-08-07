@@ -326,7 +326,7 @@ type Signal = {
 
         exitPlan: {
           targetExit: string;
-          mandatoryExit: string;
+          timeExit: string;
         };
   };  
 }
@@ -500,11 +500,11 @@ function PremiumSignalCard({ signal }: { signal: Signal }) {
 
                 <div className="rounded border border-destructive/30 p-3">
                   <div className="text-[10px] text-muted-foreground">
-                    Mandatory Exit
+                    Time Exit
                   </div>
 
                   <div className="font-bold text-destructive">
-                    {signal.aiStrike.exitPlan.mandatoryExit}
+                    {signal.aiStrike.exitPlan.timeExit}
                   </div>
                 </div>
 

@@ -254,7 +254,7 @@ export const GetTradeSignalsResponse = zod.object({
   "strikePrice": zod.number().nullable(),
   "optionLtp": zod.number().nullable(),
   "expiry": zod.string().nullable(),
-  "status": zod.enum(['ACTIVE', 'HIT_TARGET1', 'HIT_TARGET2', 'HIT_TARGET3', 'STOPPED_OUT', 'EXPIRED']),
+  "status": zod.enum(['WAITING', 'ACTIVE', 'HIT_TARGET1', 'HIT_TARGET2', 'HIT_TARGET3', 'STOPPED_OUT', 'EXPIRED']),
   "timestamp": zod.string(),
   "indicators": zod.object({
   "rsi": zod.number(),

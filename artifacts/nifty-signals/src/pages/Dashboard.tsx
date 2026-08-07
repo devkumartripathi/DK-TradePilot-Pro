@@ -88,7 +88,7 @@ aiStrike?: {
 
   exitPlan?: {
     targetExit: string;
-    mandatoryExit: string;
+    timeExit: string;
   };
   };
 
@@ -124,7 +124,7 @@ console.log("===============================");
       {!waiting && signal.optionLtp != null && (
         <div className="text-xs text-muted-foreground font-mono">Option LTP: <span className="text-foreground font-bold">₹{signal.optionLtp.toFixed(2)}</span></div>
       )}
-       {!waiting && ( 
+       { ( 
         <div className="grid grid-cols-3 gap-2 text-xs font-mono">
         <div className="flex flex-col"><span className="text-muted-foreground">Entry</span><span className="font-semibold">{signal.entry.toFixed(2)}</span></div>
         <div className="flex flex-col"><span className="text-destructive/80">Stop Loss</span><span className="font-semibold text-destructive">{signal.stopLoss.toFixed(2)}</span></div>
@@ -135,7 +135,7 @@ console.log("===============================");
       </div>
        )} 
 
-       {!waiting && signal.optionTrade && (
+       { signal.optionTrade && (
   <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
     <div className="text-xs font-bold mb-2">
       OPTION PREMIUM
@@ -259,7 +259,7 @@ console.log("===============================");
   Mandatory Exit :
   {" "}
   <b>
-    {signal.aiStrike.exitPlan?.mandatoryExit ?? "--"}
+    {signal.aiStrike.exitPlan?.timeExit ?? "--"}
   </b>
 </div>
       </div>
@@ -296,7 +296,11 @@ const { data: fyers } = useGetFyersAnalysis({
     refetchInterval: 5000,
     queryKey: getGetFyersAnalysisQueryKey(),
   },
-})
+}) 
+const now = new Date()
+const minutes = now.getHours() * 60 + now.getMinutes()
+const isMarketOpen = minutes >= 555 && minutes <= 930 
+
   const activeSignals = signals?.signals?.filter(s => s.status === "ACTIVE") ?? [];
   console.log("Active Signals:", activeSignals);
 console.log("All Signals:", signals);
@@ -304,7 +308,6 @@ console.log("Option Signal Type:", activeSignals[0]?.optionSignalType);
 console.log("First Active Signal:", activeSignals[0]); 
 
 console.log("FYERS Analysis:", fyers) 
-
   return (
     <div className="flex flex-col gap-6">
       <NiftyTicker />
@@ -537,39 +540,40 @@ console.log("FYERS Analysis:", fyers)
           {!signals ? (
             <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-32 animate-pulse bg-muted rounded-lg border border-border" />)}</div>
           ) : activeSignals.length === 0 ? (
-  <SignalCard
-    signal={{
-      id: "waiting",
-      direction: "BUY",
-      instrument: "NIFTY 50",
-      optionType: "--",
-      optionSignalType: "CALL_BUY",
+ <div className="rounded-xl border border-border bg-card p-6 text-center space-y-3">
+    <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-sm font-medium">
+      <span className="h-2 w-2 rounded-full bg-yellow-500" />
+      {!isMarketOpen ? "MARKET CLOSED" : "SCANNING"}
+    </div>
 
-      strikePrice: null,
-      optionLtp: null,
+    <div className="space-y-1">
+      <div className="text-lg font-semibold">
+        {!isMarketOpen ? "No active trade signals" : "AI is scanning for the next setup"}
+      </div>
 
-      entry: 0,
-      stopLoss: 0,
-      target1: 0,
-      target2: 0,
-      target3: 0,
+      <div className="text-sm text-muted-foreground">
+        {!isMarketOpen
+          ? "Market is closed now. The next scanning session will begin at 9:15 AM."
+          : signals.noTradeReason ?? "Waiting for a high-probability setup with sufficient confluence."}
+      </div>
+    </div>
 
-      riskReward: 0,
+    <div className="grid grid-cols-2 gap-3 pt-2 text-sm">
+      <div className="rounded-lg border border-border p-3">
+        <div className="text-muted-foreground">Signal Count</div>
+        <div className="font-semibold">0</div>
+      </div>
 
-      confidenceScore: 0,
-      confidenceLabel: "SCANNING",
-
-      smcSetup:
-        signals.noTradeReason ??
-        "AI is scanning for the next high-probability setup.",
-
-      status: "WAITING",
-    }}
-  />
+      <div className="rounded-lg border border-border p-3">
+        <div className="text-muted-foreground">Engine State</div>
+        <div className="font-semibold">{!isMarketOpen ? "Standby" : "Scanning"}</div>
+      </div>
+    </div>
+  </div>
           ) : (
             <div className="flex flex-col gap-3">
               <>
-  <div className="bg-red-600 text-white p-2 rounded">
+  <div className="bg-muted text-foreground border border-border p-2 rounded-lg text-sm font-medium">
     Signal Count: {activeSignals.length}
   </div>
 

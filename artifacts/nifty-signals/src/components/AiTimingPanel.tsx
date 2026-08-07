@@ -11,7 +11,7 @@ type AiTimingPanelProps = {
 
     exitPlan: {
       targetExit: string;
-      mandatoryExit: string;
+      timeExit: string;
     };
 
     entryAllowed?: boolean;
@@ -51,7 +51,7 @@ export function AiTimingPanel({
       </div>
 
       <div className="text-destructive">
-        Exit : {timing.exitPlan.mandatoryExit}
+        Exit : {timing.exitPlan.timeExit}
       </div>
     </div>
 

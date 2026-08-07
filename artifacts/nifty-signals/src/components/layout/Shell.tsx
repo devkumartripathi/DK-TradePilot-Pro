@@ -3,8 +3,20 @@ import { Link, useLocation } from "wouter"
 import { Activity, BarChart2, CandlestickChart, Crosshair, LayoutDashboard, RefreshCw, } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+import { useQueryClient } from "@tanstack/react-query"
+import {
+  getGetNiftyDataQueryKey,
+  getGetOptionsMetricsQueryKey,
+  getGetSmcAnalysisQueryKey,
+  getGetTradeSignalsQueryKey,
+  getGetVwapQueryKey,
+  getGetFyersAnalysisQueryKey,
+} from "@workspace/api-client-react"
+import { postJson } from "@/lib/api"
+
 export default function Shell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const queryClient = useQueryClient();
 const REFRESH_SECONDS = 15;
 
 const [lastUpdated, setLastUpdated] = React.useState(new Date());
@@ -24,8 +36,23 @@ React.useEffect(() => {
   return () => clearInterval(timer);
 }, []);
 
-const handleRefresh = () => {
-  window.location.reload();
+const handleRefresh = async () => {
+  console.log("Manual Refresh Clicked");
+
+  try {
+    await postJson("/api/signals/refresh");
+
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: getGetNiftyDataQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: getGetOptionsMetricsQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: getGetSmcAnalysisQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: getGetTradeSignalsQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: getGetVwapQueryKey() }),
+      queryClient.invalidateQueries({ queryKey: getGetFyersAnalysisQueryKey() }),
+    ]);
+  } catch (error) {
+    console.error("Manual refresh failed:", error);
+  }
 };
 
 

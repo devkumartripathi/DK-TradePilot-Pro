@@ -393,6 +393,7 @@ export type TradeSignalStatus = typeof TradeSignalStatus[keyof typeof TradeSigna
 
 
 export const TradeSignalStatus = {
+  WAITING: 'WAITING',
   ACTIVE: 'ACTIVE',
   HIT_TARGET1: 'HIT_TARGET1',
   HIT_TARGET2: 'HIT_TARGET2',

@@ -864,7 +864,7 @@ components:
           nullable: true
         status:
           type: string
-          enum: ["ACTIVE", "HIT_TARGET1", "HIT_TARGET2", "HIT_TARGET3", "STOPPED_OUT", "EXPIRED"]
+          enum: ["WAITING", "ACTIVE", "HIT_TARGET1", "HIT_TARGET2", "HIT_TARGET3", "STOPPED_OUT", "EXPIRED"]
         timestamp:
           type: string
         indicators:

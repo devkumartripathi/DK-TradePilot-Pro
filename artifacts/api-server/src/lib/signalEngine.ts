@@ -157,6 +157,25 @@ console.log("VWAP:", vwap);
     atmCallDelta, atmPutDelta, oiChangeBull, oiChangeBear,
     rsiSignal, emaSignal, vwapPosition, volumeSignal, adx,
   };
+} 
+
+// --------------------------------------------------
+// ACTIVE SIGNAL CACHE
+// --------------------------------------------------
+
+let activeSignal: any = null; 
+
+// --------------------------------------------------
+// SIGNAL SIGNATURE
+// --------------------------------------------------
+
+function buildSignalSignature(
+  type: SignalType,
+  strike: number,
+  bias: string,
+  phase: string
+): string {
+  return `${type}|${strike}|${bias}|${phase}`;
 }
 
 // ── Signal builder ────────────────────────────────────────────────────────────
@@ -165,8 +184,18 @@ function r2(n: number) { return Math.round(n * 100) / 100; }
 
 function buildSignal(type: SignalType, confidence: number, factors: any[], ind: TechIndicators, data: BrokerMarketData, smcBias: string, strikeRecommendation?: any) {
   const spot   = data.spot.ltp;
-  const meta   = SIGNAL_META[type]; 
-  const isBuy  = meta.direction === "BUY";
+ 
+const meta = SIGNAL_META[type];
+
+// Spot direction (market move)
+const isBullishSpot =
+  type === "CALL_BUY" || type === "PUT_SELL";
+
+const isBearishSpot =
+  type === "PUT_BUY" || type === "CALL_SELL";
+
+// Option premium side
+const isOptionBuy = meta.direction === "BUY";
 console.log("========== buildSignal ==========");
 console.log("Spot:", data.spot);
 console.log("LTP:", data.spot.ltp);
@@ -174,18 +203,32 @@ console.log("Meta:", meta);
 console.log("OptionChain:", data.optionChain);
 console.log("=================================");
   const atm    = Math.round(spot / 50) * 50;
-  const strike = atm + meta.strikeOffset;
+  const strike = strikeRecommendation?.recommended?.strike?.strike ?? atm;
   const expiry = data.optionChain.expiry;
 
   const slPts = r2(ind.atr * meta.slMult);
   const t1Pts = r2(ind.atr * meta.t1Mult);
   const t2Pts = r2(ind.atr * meta.t2Mult);
 
-  const entry    = r2(isBuy ? spot + 5 : spot - 5);
-  const stopLoss = r2(isBuy ? spot - slPts : spot + slPts);
-  const target1  = r2(isBuy ? spot + t1Pts : spot - t1Pts);
-  const target2  = r2(isBuy ? spot + t2Pts : spot - t2Pts);
-  const target3  = r2(isBuy ? spot + t2Pts * 1.4 : spot - t2Pts * 1.4);
+  const entry = r2(
+  isBullishSpot ? spot + 5 : spot - 5
+);
+
+const stopLoss = r2(
+  isBullishSpot ? entry - slPts : entry + slPts);
+
+const target1 = r2(
+  isBullishSpot ? entry + t1Pts : entry - t1Pts
+);
+
+const target2 = r2(
+  isBullishSpot ? entry + t2Pts : entry - t2Pts
+);
+
+const target3 = r2(
+  isBullishSpot ? entry + t2Pts * 1.4 : entry - t2Pts * 1.4
+);
+
   const riskReward = r2(t2Pts / slPts);
 
   // Option LTP — find from chain if available
@@ -195,33 +238,31 @@ console.log("=================================");
     : r2(45 + Math.random() * 30);
   const atmDelta = meta.optionType === "CE" ? ind.atmCallDelta : ind.atmPutDelta;
 const optionEntry = optionLtp;
+const optionSlPct = isOptionBuy ? 0.25 : 0.35;
 
-const optionSlPct = isBuy ? 0.25 : 0.35;
-
-const optionTarget1Pct = isBuy ? 0.30 : 0.20;
-const optionTarget2Pct = isBuy ? 0.60 : 0.40;
-const optionTarget3Pct = isBuy ? 1.00 : 0.70;
-
+const optionTarget1Pct = isOptionBuy ? 0.30 : 0.20;
+const optionTarget2Pct = isOptionBuy ? 0.60 : 0.40;
+const optionTarget3Pct = isOptionBuy ? 1.00 : 0.70;
 const optionStopLoss = r2(
-  isBuy
+  isOptionBuy
     ? optionEntry * (1 - optionSlPct)
     : optionEntry * (1 + optionSlPct)
 );
 
 const optionTarget1 = r2(
-  isBuy
+  isOptionBuy
     ? optionEntry * (1 + optionTarget1Pct)
     : optionEntry * (1 - optionTarget1Pct)
 );
 
 const optionTarget2 = r2(
-  isBuy
+  isOptionBuy
     ? optionEntry * (1 + optionTarget2Pct)
     : optionEntry * (1 - optionTarget2Pct)
 );
 
 const optionTarget3 = r2(
-  isBuy
+  isOptionBuy
     ? optionEntry * (1 + optionTarget3Pct)
     : optionEntry * (1 - optionTarget3Pct)
 ); 
@@ -280,7 +321,8 @@ const qualityReason =
 
 
   return {
-    id: `sig_${type.toLowerCase()}_${Date.now()}`,
+
+    id: buildSignalSignature( type,strike,smcBias,strikeRecommendation?.marketType ?? "NORMAL"),
     type: "INTRADAY", instrument: "NIFTY50", optionSignalType: type,
     direction: meta.direction,
     entry, stopLoss, target1, target2, target3,
@@ -394,7 +436,7 @@ function getConfidenceThreshold(
 
 }
 
-export async function generateSignals(): Promise<{
+export async function generateSignals(): Promise<{ 
   signals: any[];
   noTradeZone: boolean;
   noTradeReason: string | null;
@@ -403,8 +445,34 @@ export async function generateSignals(): Promise<{
   generatedAt: string;
   brokerSource: string;
   brokerName: string;
-}> {
-  const now   = new Date();
+}> { 
+  console.log("========== generateSignals() ==========");
+console.log(new Date().toISOString());
+  const now   = new Date(); 
+const freezeNowMs = Date.now();
+
+// Freeze ACTIVE signal for 3 minutes
+if (
+  activeSignal &&
+  activeSignal.status === "ACTIVE" &&
+  freezeNowMs - new Date(activeSignal.timestamp).getTime() < 180_000
+) {
+  return {
+    signals: [activeSignal],
+    noTradeZone: false,
+    noTradeReason: null,
+    marketBias:
+      activeSignal.optionSignalType === "CALL_BUY" ||
+      activeSignal.optionSignalType === "PUT_SELL"
+        ? "BULLISH"
+        : "BEARISH",
+    sessionTime: now.getDay() === 4 ? "EXPIRY_DAY" : "NORMAL_SESSION",
+    generatedAt: now.toISOString(),
+    brokerSource: activeSignal.brokerSource ?? "live",
+    brokerName: "FYERS",
+  };
+}
+
   const hour  = now.getHours();
   const isLunch = hour === 12 || (hour === 13 && now.getMinutes() < 30);
 
@@ -417,7 +485,6 @@ export async function generateSignals(): Promise<{
     logger.error({ err }, "Broker.getMarketData() failed");
     throw err;
   }
-
   const candles = data.candles15m;
   console.log("15m candles:", candles.length);
   if (candles.length < 20) { 
@@ -652,6 +719,16 @@ console.log("Final Confidence:", finalConfidence);
 console.log("Conflict Score:", conflictScore);
 console.log("==================================");
 
+console.log("===== SIGNAL STABILITY =====");
+console.log("Best Type:", best.type);
+console.log("Confidence:", finalConfidence);
+console.log(
+  "Strike:",
+  strikeRecommendation.recommended.strike.strike
+); 
+
+console.log("============================");
+
 // Save stable signal
 
 lastSignal = best.type;
@@ -696,6 +773,14 @@ signal.status = entryAllowed ? "ACTIVE" : "WAITING";
 
     signals.push(signal);
 
+activeSignal = signal;
+
+console.log("===== ACTIVE SIGNAL SAVED =====");
+console.log("Type:", activeSignal.optionSignalType);
+console.log("Strike:", activeSignal.strikePrice);
+console.log("Status:", activeSignal.status);
+console.log("===============================");
+
     // Auto Telegram dispatch
     const cfg = getTelegramConfig();
     if (cfg.enabled && cfg.botToken && cfg.chatId) {
@@ -707,8 +792,7 @@ signal.status = entryAllowed ? "ACTIVE" : "WAITING";
     }
   }
 
-  
-  return {
+  return { 
     signals, noTradeZone, noTradeReason,
     marketBias, sessionTime,
     generatedAt: now.toISOString(),
@@ -716,7 +800,9 @@ signal.status = entryAllowed ? "ACTIVE" : "WAITING";
     brokerName: broker.name,
   };
 }
-
+export function getActiveSignal() {
+  return activeSignal;
+}
 /** Expose broker status for the /broker/status route */
 export async function getBrokerStatus(): Promise<{
   name: string; source: string; available: boolean;

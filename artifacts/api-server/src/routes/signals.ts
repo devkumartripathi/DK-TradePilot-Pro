@@ -5,7 +5,7 @@
 
 import { Router, type IRouter } from "express";
 import { GetTradeSignalsResponse } from "@workspace/api-zod";
-import { generateSignals, getBrokerStatus } from "../lib/signalEngine.js";
+import { generateSignals,getBrokerStatus,getActiveSignal,} from "../lib/signalEngine.js";
 import { resetBroker } from "../lib/broker/index.js";
 
 const router: IRouter = Router();
@@ -32,7 +32,42 @@ router.get("/signals/broker/status", async (_req, res): Promise<void> => {
   }
 });
 
+// POST /signals/refresh
+router.post("/signals/refresh", async (_req, res): Promise<void> => {
+  try {
+    const active = getActiveSignal(); 
+console.log("ACTIVE SIGNAL =", active);
+
+if (active) {
+  res.json({
+    success: true,
+    source: "cache",
+    signal: active,
+  });
+  return;
+}
+const result = await generateSignals();
+
+res.json({
+  success: true,
+  source: "engine",
+  signal: result.signals?.find(
+    (s) => s.status === "ACTIVE"
+  ) ?? null,
+});
+
+return;
+
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err?.message ?? String(err),
+    });
+  }
+});
+
 // POST /signals/broker/reset — force re-initialization (call after updating tokens)
+
 router.post("/signals/broker/reset", (_req, res): void => {
   resetBroker();
   res.json({ success: true, message: "Broker adapter reset. Next request will re-initialize." });
