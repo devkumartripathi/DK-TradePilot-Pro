@@ -553,7 +553,7 @@ console.log("FYERS Analysis:", fyers)
 
       <div className="text-sm text-muted-foreground">
         {!isMarketOpen
-          ? "Market is closed now. The next scanning session will begin at 9:15 AM."
+          ? "NOTICE - Market is closed now. The next scanning session will begin on the next trading day at 9:15 AM.  महत्वपूर्ण सूचना - कृपया ध्यान दें,बाज़ार अभी बंद है।अगले दिन बाज़ार खुलने के बाद 9:15 AM पर स्कैनिंग शुरू होगी ।यदि कोई सिग्नल उपलब्ध होगा तो ही ट्रेड  सेट-अप मिलेगा। "
           : signals.noTradeReason ?? "Waiting for a high-probability setup with sufficient confluence."}
       </div>
     </div>
