@@ -291,8 +291,11 @@ console.log("NIFTY DATA:", nifty);
   const { data: metrics } = useGetOptionsMetrics({ query: { refetchInterval: 10000, queryKey: getGetOptionsMetricsQueryKey() } })
   const { data: smc } = useGetSmcAnalysis({ query: { refetchInterval: 15000, queryKey: getGetSmcAnalysisQueryKey() } }) 
   console.log("SMC DATA =", smc);
-  const { data: signals } = useGetTradeSignals({ query: { refetchInterval: 10000, queryKey: getGetTradeSignalsQueryKey() } })
-  const { data: vwap } = useGetVwap({ query: { refetchInterval: 5000, queryKey: getGetVwapQueryKey() } })
+  const { data: signals } = useGetTradeSignals({ query: { refetchInterval: 10000, queryKey: getGetTradeSignalsQueryKey() } }) 
+const activeSignals = signals?.signals?.filter(s => s.status === "ACTIVE") ?? []; 
+  const liveAdx = (activeSignals[0] as any)?.indicators?.adx;
+  const { data: vwap } = useGetVwap({ query: { refetchInterval: 5000, queryKey: getGetVwapQueryKey() } }) 
+  
 const { data: fyers } = useGetFyersAnalysis({
   query: {
     refetchInterval: 5000,
@@ -307,12 +310,13 @@ const marketStatus = getMarketCurrentStatus({
   trend: (fyers as any)?.trend?.trend,
   rsi: fyers?.rsi14,
   vwapPosition: vwap?.priceVsVwap,
-  adx: 26, // temporary existing trend-strength placeholder
+  adx: liveAdx, 
   pcr: metrics?.pcr,
   vix: metrics?.indiaVix,
 });
 
-  const activeSignals = signals?.signals?.filter(s => s.status === "ACTIVE") ?? [];
+  
+  
   console.log("Active Signals:", activeSignals);
 console.log("All Signals:", signals);
 console.log("Option Signal Type:", activeSignals[0]?.optionSignalType);
