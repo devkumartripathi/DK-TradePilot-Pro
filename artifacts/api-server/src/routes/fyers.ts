@@ -62,15 +62,19 @@ router.get("/fyers/callback", async (req, res) => {
       .createHash("sha256")
       .update(`${appId}:${secret}`)
       .digest("hex");
-
-    const response = await axios.post(
-      "https://api.fyers.in/api/v2/validate-authcode",
-      {
-        grant_type: "authorization_code",
-        appIdHash,
-        code: authCode,
-      }
-    );
+      const response = await axios.post(
+  "https://api-t1.fyers.in/api/v3/validate-authcode",
+  {
+    grant_type: "authorization_code",
+    appIdHash: appIdHash,
+    code: authCode,
+  },
+  {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }
+);
 
     const accessToken = response.data.access_token;
 
