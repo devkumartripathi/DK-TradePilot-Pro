@@ -147,15 +147,33 @@ export function calcAdx(candles: OHLCV[], period = 14): number {
 
 // ── Helper — filter today's candles for VWAP ────────────────────────────────
 export function todayCandles(candles: OHLCV[]): OHLCV[] {
+  if (candles.length === 0) return [];
+
   const now = new Date();
 
-  // India Market Session
-  const sessionStart = new Date(now);
+  // IST date string for today
+  const todayIST = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+  }).format(now);
 
-  sessionStart.setHours(9, 15, 0, 0);
+  // Group candles by IST date
+  const byDate = new Map<string, OHLCV[]>();
 
-  return candles.filter(c => {
-    const t = new Date(c.time);
-    return t >= sessionStart;
-  });
+  for (const c of candles) {
+    const d = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+    }).format(new Date(c.time));
+
+    if (!byDate.has(d)) byDate.set(d, []);
+    byDate.get(d)!.push(c);
+  }
+
+  // If market has candles for today, use today.
+  if (byDate.has(todayIST)) {
+    return byDate.get(todayIST)!;
+  }
+
+  // Otherwise use the latest available trading session.
+  const latestDate = Array.from(byDate.keys()).sort().at(-1)!;
+  return byDate.get(latestDate)!;
 }
